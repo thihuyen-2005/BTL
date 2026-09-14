@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Kỳ thi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+
+        <div class="page-header">
+            <div>
+                <div class="title">Danh sách Kỳ thi</div>
+                <div class="subtitle">Quản lý các đợt tổ chức thi chứng chỉ</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <input id="search" placeholder="🔍 Tìm theo mã hoặc tên...">
+            <select id="filterStatus">
+                <option value="">Tất cả trạng thái</option>
+                <option>MoiTao</option>
+                <option>DangLapLich</option>
+                <option>DangThi</option>
+                <option>KetThuc</option>
+                <option>Huy</option>
+            </select>
+            <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnAdd">➕ Thêm kỳ thi</button>
+        </div>
+
+        <div class="card">
+            <table id="tblExams">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">ID</th>
+                        <th>Mã</th>
+                        <th>Tên kỳ thi</th>
+                        <th>Loại CC</th>
+                        <th>Bắt đầu ĐK</th>
+                        <th>Kết thúc ĐK</th>
+                        <th>Trạng thái</th>
+                        <th style="width:70px;">Số ca</th>
+                        <th style="width:230px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">Thêm kỳ thi</h2>
+            <form id="formExam">
+                <input type="hidden" id="kyThiId">
+                <label>Mã kỳ thi
+                    <input id="maKyThi" required maxlength="50" placeholder="VD: ICDL-09-2026">
+                </label>
+                <label>Tên kỳ thi
+                    <input id="tenKyThi" required maxlength="200" placeholder="VD: ICDL đợt 9/2026">
+                </label>
+                <label>Loại chứng chỉ
+                    <input id="loaiChungChi" required maxlength="50" placeholder="VD: ICDL, MOS">
+                </label>
+                <label>Ngày bắt đầu đăng ký
+                    <input type="date" id="batDauDk" required>
+                </label>
+                <label>Ngày kết thúc đăng ký
+                    <input type="date" id="ketThucDk" required>
+                </label>
+                <label>Ghi chú
+                    <textarea id="ghiChu" rows="3"></textarea>
+                </label>
+                <div class="actions">
+                    <button type="button" id="btnCancel">Hủy</button>
+                    <button type="submit">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/exams.js"></script>
+</body>
+</html>

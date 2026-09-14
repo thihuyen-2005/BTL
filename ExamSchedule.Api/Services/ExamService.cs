@@ -1,0 +1,107 @@
+using ExamSchedule.Api.Data;
+using ExamSchedule.Api.DTOs;
+using ExamSchedule.Api.Entities;
+using ExamSchedule.Api.Middlewares;
+using Microsoft.EntityFrameworkCore;
+
+namespace ExamSchedule.Api.Services;
+
+public class ExamService
+{
+    private readonly AppDbContext _db;
+    private readonly AuditService _audit;
+
+    public ExamService(AppDbContext db, AuditService audit)
+    { _db = db; _audit = audit; }
+
+    public async Task<PagedResult<KyThiResponseDto>> GetPagedAsync(int page, int limit, string? status)
+    {
+        var q = _db.KyThis.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrEmpty(status))
+            q = q.Where(k => k.TrangThai.ToString() == status);
+
+        var total = await q.CountAsync();
+        var items = await q
+            .OrderByDescending(k => k.KyThiId)
+            .Skip((page - 1) * limit).Take(limit)
+            .Select(k => new KyThiResponseDto(
+                k.KyThiId, k.MaKyThi, k.TenKyThi, k.LoaiChungChi,
+                k.ThoiGianBatDauDk, k.ThoiGianKetThucDk,
+                k.TrangThai.ToString(),
+                k.CaThis.Count))
+            .ToListAsync();
+
+        return new PagedResult<KyThiResponseDto>(items, total, page, limit);
+    }
+
+    public async Task<KyThiResponseDto> GetByIdAsync(int id)
+    {
+        var k = await _db.KyThis.Include(x => x.CaThis)
+            .FirstOrDefaultAsync(x => x.KyThiId == id)
+            ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
+
+        return new KyThiResponseDto(
+            k.KyThiId, k.MaKyThi, k.TenKyThi, k.LoaiChungChi,
+            k.ThoiGianBatDauDk, k.ThoiGianKetThucDk,
+            k.TrangThai.ToString(), k.CaThis.Count);
+    }
+
+    public async Task<KyThiResponseDto> CreateAsync(KyThiCreateDto dto, int userId, string ip)
+    {
+        if (dto.ThoiGianKetThucDk < dto.ThoiGianBatDauDk)
+            throw new BusinessException("Ngày kết thúc ĐK phải >= ngày bắt đầu.");
+
+        if (await _db.KyThis.AnyAsync(k => k.MaKyThi == dto.MaKyThi))
+            throw new BusinessException("Mã kỳ thi đã tồn tại.");
+
+        var kt = new KyThi
+        {
+            MaKyThi = dto.MaKyThi,
+            TenKyThi = dto.TenKyThi,
+            LoaiChungChi = dto.LoaiChungChi,
+            ThoiGianBatDauDk = dto.ThoiGianBatDauDk,
+            ThoiGianKetThucDk = dto.ThoiGianKetThucDk,
+            GhiChu = dto.GhiChu,
+            TrangThai = TrangThaiKyThi.MoiTao
+        };
+        _db.KyThis.Add(kt);
+        await _db.SaveChangesAsync();
+
+        await _audit.LogAsync(userId, "CREATE", "KY_THI", kt.KyThiId, null, kt, ip);
+
+        return new KyThiResponseDto(kt.KyThiId, kt.MaKyThi, kt.TenKyThi,
+            kt.LoaiChungChi, kt.ThoiGianBatDauDk, kt.ThoiGianKetThucDk,
+            kt.TrangThai.ToString(), 0);
+    }
+
+    public async Task UpdateAsync(int id, KyThiUpdateDto dto, int userId, string ip)
+    {
+        var kt = await _db.KyThis.FindAsync(id)
+            ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
+
+        var old = new { kt.TenKyThi, kt.ThoiGianKetThucDk, kt.GhiChu };
+
+        kt.TenKyThi = dto.TenKyThi;
+        kt.ThoiGianKetThucDk = dto.ThoiGianKetThucDk;
+        kt.GhiChu = dto.GhiChu;
+        kt.NgayCapNhat = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        await _audit.LogAsync(userId, "UPDATE", "KY_THI", id, old,
+            new { kt.TenKyThi, kt.ThoiGianKetThucDk, kt.GhiChu }, ip);
+    }
+
+    public async Task DeleteAsync(int id, int userId, string ip)
+    {
+        var kt = await _db.KyThis.Include(k => k.CaThis)
+            .FirstOrDefaultAsync(k => k.KyThiId == id)
+            ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
+
+        if (kt.CaThis.Any())
+            throw new BusinessException("Không thể xóa: kỳ thi đã có ca thi.");
+
+        _db.KyThis.Remove(kt);
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync(userId, "DELETE", "KY_THI", id, kt, null, ip);
+    }
+}

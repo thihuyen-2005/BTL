@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Quản lý Lịch thi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+    <div class="login-box">
+        <div class="brand">🎓</div>
+        <h1>Quản lý Lịch thi</h1>
+        <div class="subtitle">Hệ thống chứng chỉ Năng lực số</div>
+        <form id="formLogin">
+            <label>Tên đăng nhập
+                <input id="username" required autocomplete="username" autofocus>
+            </label>
+            <label>Mật khẩu
+                <input type="password" id="password" required autocomplete="current-password">
+            </label>
+            <button type="submit">Đăng nhập</button>
+            <p id="error" class="error"></p>
+        </form>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

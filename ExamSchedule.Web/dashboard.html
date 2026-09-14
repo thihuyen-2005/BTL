@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ - Quản lý Lịch thi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Nội dung sẽ được bọc trong main-content bởi layout.js -->
+
+        <div class="welcome-banner">
+            <h2 id="welcomeName">Xin chào 👋</h2>
+            <p>Chào mừng bạn đến với hệ thống quản lý lịch thi chứng chỉ Năng lực số</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue">📋</div>
+                <div>
+                    <div class="stat-value" id="statKyThi">—</div>
+                    <div class="stat-label">Kỳ thi</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon mint">🕐</div>
+                <div>
+                    <div class="stat-value" id="statCaThi">—</div>
+                    <div class="stat-label">Ca thi</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon kem">🏛️</div>
+                <div>
+                    <div class="stat-value" id="statPhong">—</div>
+                    <div class="stat-label">Phòng thi</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pu">👥</div>
+                <div>
+                    <div class="stat-value" id="statUsers">—</div>
+                    <div class="stat-label">Người dùng</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📌 Kỳ thi gần đây</h3>
+                    <a href="exams.html" style="font-size:13px;">Xem tất cả →</a>
+                </div>
+                <div id="recentExams" style="padding:0;">
+                    <div class="empty">
+                        <div class="icon">⏳</div>
+                        <div>Đang tải...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>⚡ Thao tác nhanh</h3>
+                </div>
+                <div style="padding:14px;">
+                    <div class="quick-actions">
+                        <a href="exams.html">
+                            <div class="icon">➕</div>
+                            <div>
+                                <div class="title">Tạo kỳ thi mới</div>
+                                <div class="desc">Thiết lập đợt thi mới</div>
+                            </div>
+                        </a>
+                        <a href="exams.html">
+                            <div class="icon">🕐</div>
+                            <div>
+                                <div class="title">Quản lý ca thi</div>
+                                <div class="desc">Xếp lịch và phòng thi</div>
+                            </div>
+                        </a>
+                        <a href="#" onclick="alert('Chức năng đang phát triển'); return false;">
+                            <div class="icon">👤</div>
+                            <div>
+                                <div class="title">Phân công giám thị</div>
+                                <div class="desc">Sắp có</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
