@@ -10,15 +10,25 @@ public class ExamService
 {
     private readonly AppDbContext _db;
     private readonly AuditService _audit;
+    private readonly ExamStatusUpdater _statusUpdater;              // ← THÊM 1
 
-    public ExamService(AppDbContext db, AuditService audit)
-    { _db = db; _audit = audit; }
+    public ExamService(AppDbContext db, AuditService audit, 
+                       ExamStatusUpdater statusUpdater)             // ← THÊM 2
+    {
+        _db = db;
+        _audit = audit;
+        _statusUpdater = statusUpdater;                             // ← THÊM 3
+    }
 
     public async Task<PagedResult<KyThiResponseDto>> GetPagedAsync(int page, int limit, string? status)
     {
+        await _statusUpdater.UpdateAllAsync(); 
         var q = _db.KyThis.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrEmpty(status))
-            q = q.Where(k => k.TrangThai.ToString() == status);
+        if (!string.IsNullOrEmpty(status) && 
+    Enum.TryParse<TrangThaiKyThi>(status, out var tt))
+            {
+                q = q.Where(k => k.TrangThai == tt);
+            }
 
         var total = await q.CountAsync();
         var items = await q
@@ -36,6 +46,7 @@ public class ExamService
 
     public async Task<KyThiResponseDto> GetByIdAsync(int id)
     {
+        await _statusUpdater.UpdateAllAsync(); 
         var k = await _db.KyThis.Include(x => x.CaThis)
             .FirstOrDefaultAsync(x => x.KyThiId == id)
             ?? throw new NotFoundException("Không tìm thấy kỳ thi.");

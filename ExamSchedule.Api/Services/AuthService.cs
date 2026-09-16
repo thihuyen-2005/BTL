@@ -76,4 +76,23 @@ public class AuthService
             await _db.SaveChangesAsync();
         }
     }
+
+        public async Task ChangePasswordAsync(int userId, ChangePasswordRequest req)
+    {
+        if (req.NewPassword != req.ConfirmPassword)
+            throw new Middlewares.BusinessException("Mật khẩu xác nhận không khớp.");
+        if (req.NewPassword.Length < 6)
+            throw new Middlewares.BusinessException("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+        var user = await _db.Users.FindAsync(userId)
+            ?? throw new Middlewares.NotFoundException("Không tìm thấy user.");
+
+        if (!BCrypt.Net.BCrypt.Verify(req.OldPassword, user.PasswordHash))
+            throw new Middlewares.BusinessException("Mật khẩu cũ không đúng.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+        user.RefreshToken = null;
+        user.RefreshTokenExpiry = null;
+        await _db.SaveChangesAsync();
+    }
 }

@@ -41,4 +41,27 @@ public class AuthController : ControllerBase
         await _auth.LogoutAsync(id);
         return NoContent();
     }
+    
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _auth.ChangePasswordAsync(id, req);
+        return Ok(new { message = "Đổi mật khẩu thành công!" });
+    }
+
+    [HttpGet("test-hash")]
+[AllowAnonymous]
+public IActionResult TestHash()
+{
+    var hash = BCrypt.Net.BCrypt.HashPassword("Admin@2026");
+    var verify = BCrypt.Net.BCrypt.Verify("Admin@2026", hash);
+    var verifyWrong = BCrypt.Net.BCrypt.Verify("admin@2026", hash);
+    return Ok(new { 
+        hash, 
+        verifyWithCorrectPw = verify,     // Phải = true
+        verifyWithWrongPw = verifyWrong   // Phải = false
+    });
+}
 }

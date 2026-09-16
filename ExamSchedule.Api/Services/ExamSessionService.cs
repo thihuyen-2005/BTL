@@ -10,9 +10,15 @@ public class ExamSessionService
 {
     private readonly AppDbContext _db;
     private readonly AuditService _audit;
+    private readonly ExamStatusUpdater _statusUpdater;
 
-    public ExamSessionService(AppDbContext db, AuditService audit)
-    { _db = db; _audit = audit; }
+    public ExamSessionService(AppDbContext db, AuditService audit,
+                              ExamStatusUpdater statusUpdater)
+    {
+        _db = db;
+        _audit = audit;
+        _statusUpdater = statusUpdater;
+    }
 
     public async Task<List<CaThiResponseDto>> GetByKyThiAsync(int kyThiId, string? trangThai)
     {
@@ -20,8 +26,11 @@ public class ExamSessionService
             .Include(c => c.KyThi).Include(c => c.PhongThi)
             .Where(c => c.KyThiId == kyThiId);
 
-        if (!string.IsNullOrEmpty(trangThai))
-            q = q.Where(c => c.TrangThai.ToString() == trangThai);
+        if (!string.IsNullOrEmpty(trangThai) &&
+            Enum.TryParse<TrangThaiCaThi>(trangThai, out var tt))
+        {
+            q = q.Where(c => c.TrangThai == tt);
+        }
 
         return await q.OrderBy(c => c.ThoiGianBatDau)
             .Select(c => ToDto(c)).ToListAsync();
@@ -57,6 +66,8 @@ public class ExamSessionService
         await _db.Entry(ca).Reference(c => c.PhongThi).LoadAsync();
 
         await _audit.LogAsync(userId, "CREATE", "CA_THI", ca.CaThiId, null, ca, ip);
+        await _statusUpdater.UpdateAllAsync();
+
         return ToDto(ca);
     }
 
@@ -84,6 +95,7 @@ public class ExamSessionService
 
         await _audit.LogAsync(userId, "UPDATE", "CA_THI", id, old,
             new { ca.PhongThiId, ca.ThoiGianBatDau, ca.ThoiGianKetThuc, ca.SucChua }, ip);
+        await _statusUpdater.UpdateAllAsync();
     }
 
     public async Task CloseAsync(int id, int userId, string ip)
@@ -100,6 +112,7 @@ public class ExamSessionService
         ca.NgayCapNhat = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         await _audit.LogAsync(userId, "CLOSE", "CA_THI", id, null, new { TrangThai = "Dong" }, ip);
+        await _statusUpdater.UpdateAllAsync();
     }
 
     public async Task CancelAsync(int id, int userId, string ip)
@@ -114,6 +127,7 @@ public class ExamSessionService
         ca.NgayCapNhat = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         await _audit.LogAsync(userId, "CANCEL", "CA_THI", id, null, new { TrangThai = "Huy" }, ip);
+        await _statusUpdater.UpdateAllAsync();
     }
 
     // ====== LOGIC KIỂM TRA XUNG ĐỘT (FR-EXAM-03) ======

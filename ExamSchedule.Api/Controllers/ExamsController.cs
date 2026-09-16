@@ -52,4 +52,11 @@ public class ExamsController : ControllerBase
         await _svc.DeleteAsync(id, CurrentUserId, ClientIp);
         return NoContent();
     }
+
+    [HttpPut("{id}/approve")]
+    [Authorize(Policy = "CanApprove")]      // ← QuanLy + Admin
+    public async Task<IActionResult> Approve(int id)
+    {
+        return Ok(new { message = $"Đã phê duyệt kỳ thi {id}" });
+    }
 }
