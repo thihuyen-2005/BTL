@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Người dùng</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="page-header">
+            <div>
+                <div class="title">Quản lý Người dùng</div>
+                <div class="subtitle">Tạo tài khoản và phân quyền</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <input id="search" placeholder="Tìm kiếm">
+            <select id="filterRole">
+                <option value="CANBO">Cán bộ</option>
+                <option value="SinhVien">🎓 Sinh viên</option>
+            </select>
+            <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnAddCanBo" style="display:none;">Thêm cán bộ</button>
+            <button class="btn btn-accent" id="btnAddSV" style="display:none;">🎓 Thêm sinh viên</button>
+        </div>
+
+<div id="countInfo" style="color:#64748b; font-size:13px; margin-bottom:12px;"></div>
+
+        <div class="card">
+            <table id="tblUsers">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">ID</th>
+                        <th>Username</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th style="width:100px;">Trạng thái</th>
+                        <th style="width:280px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal tạo user -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">Tạo tài khoản mới</h2>
+            <form id="formUser">
+                <label>Username (tên đăng nhập)
+                    <input id="username" required maxlength="50" placeholder="VD: sv001">
+                </label>
+                <label>Mật khẩu (≥ 6 ký tự)
+                    <input type="password" id="password" required minlength="6" placeholder="VD: Sv001@2026">
+                </label>
+                <label>Họ và tên
+                    <input id="fullName" required maxlength="100">
+                </label>
+                <label>Email
+                    <input type="email" id="email" maxlength="100">
+                </label>
+                <label>Vai trò
+                    <select id="roleName" required>
+                        <option value="SinhVien">Sinh viên</option>
+                        <option value="CBKT">Cán bộ Khảo thí</option>
+                        <option value="QuanLy">Quản lý Trung tâm</option>
+                        <option value="KeToan">Kế toán</option>
+                        <option value="Admin">Quản trị viên</option>
+                    </select>
+                </label>
+                <div class="actions">
+                    <button type="button" id="btnCancel">Hủy</button>
+                    <button type="submit">Tạo tài khoản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal reset password -->
+    <div id="modalPw" class="modal hidden">
+        <div class="modal-content">
+            <h2>Reset mật khẩu</h2>
+            <form id="formReset">
+                <input type="hidden" id="resetUserId">
+                <label>Mật khẩu mới
+                    <input type="text" id="resetPw" required minlength="6">
+                </label>
+                <div class="actions">
+                    <button type="button" id="btnCancelPw">Hủy</button>
+                    <button type="submit">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/users.js"></script>
+</body>
+</html>

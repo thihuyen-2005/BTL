@@ -4,25 +4,48 @@
 
 const MENU = [
     { section: "Tổng quan" },
-    { href: "dashboard.html",       icon: "🏠", label: "Trang chủ",       active: "dashboard" },
+    { href: "dashboard.html",       icon: "🏠", label: "Trang chủ",       active: "dashboard",
+      roles: ["Admin", "CBKT", "QuanLy", "KeToan", "SinhVien"] },
 
     { section: "Quản lý" },
-    { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams" },
-    { href: "exam-sessions.html",   icon: "🕐", label: "Ca thi",           active: "exam-sessions" },
-    { href: "#",                    icon: "👤", label: "Giám thị",         disabled: true, tag: "Sắp có" },
-    { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có" },
+    { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams",
+      roles: ["Admin", "CBKT", "QuanLy"] },
+    { href: "exam-sessions.html",   icon: "🕐", label: "Ca thi",           active: "exam-sessions",
+      roles: ["Admin", "CBKT", "QuanLy"] },
+    { href: "#",                    icon: "👤", label: "Giám thị",         disabled: true, tag: "Sắp có",
+      roles: ["Admin", "CBKT"] },
+    { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có",
+      roles: ["Admin", "CBKT"] },
+
+    { section: "Quản trị" },
+    { href: "users.html",           icon: "👥", label: "Người dùng",       active: "users",
+      roles: ["Admin"] },
 
     { section: "Tra cứu & Báo cáo" },
-    { href: "#",                    icon: "🔍", label: "Tra cứu lịch thi", disabled: true, tag: "Sắp có" },
-    { href: "#",                    icon: "📊", label: "Báo cáo thống kê", disabled: true, tag: "Sắp có" },
+    { href: "#",                    icon: "🔍", label: "Tra cứu lịch thi", disabled: true, tag: "Sắp có",
+      roles: ["Admin", "CBKT", "QuanLy", "SinhVien"] },
+    { href: "#",                    icon: "📊", label: "Báo cáo thống kê", disabled: true, tag: "Sắp có",
+      roles: ["Admin", "QuanLy", "KeToan"] },
+
+    { section: "Tài khoản" },
+    { href: "profile.html",         icon: "🔑", label: "Đổi mật khẩu",     active: "profile",
+      roles: ["Admin", "CBKT", "QuanLy", "KeToan", "SinhVien"] },
 ];
 
 function renderLayout(pageTitle, pageSubtitle) {
     const currentPage = location.pathname.split("/").pop().replace(".html", "");
 
-    // ===== Sidebar =====
+    // ⚠️ LẤY THÔNG TIN USER TRƯỚC — để filter menu dùng được
+    const fullName = localStorage.getItem("fullName") || "User";
+    const role = localStorage.getItem("role") || "—";
+    const initial = fullName.trim().charAt(0).toUpperCase();
+
+    // ===== Sidebar — LỌC MENU THEO ROLE =====
     let navHTML = "";
     MENU.forEach(item => {
+        // ⚠️ THÊM DÒNG NÀY — ẩn menu nếu role không có quyền
+        if (item.roles && !item.roles.includes(role)) return;
+
         if (item.section) {
             navHTML += `<div class="sidebar-section">${item.section}</div>`;
             return;
@@ -37,10 +60,6 @@ function renderLayout(pageTitle, pageSubtitle) {
                 ${tag}
             </a>`;
     });
-
-    const fullName = localStorage.getItem("fullName") || "User";
-    const role = localStorage.getItem("role") || "—";
-    const initial = fullName.trim().charAt(0).toUpperCase();
 
     const sidebarHTML = `
         <aside class="sidebar" id="sidebar">

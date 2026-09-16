@@ -39,11 +39,11 @@ async function loadSessions() {
         tbody.innerHTML = list.map(c => `
             <tr>
                 <td>${c.caThiId}</td>
-                <td><strong>${c.maPhong}</strong> — ${c.tenPhong}</td>
+                <td><strong>${c.maPhong}</strong></td>
                 <td>${formatDateTime(c.thoiGianBatDau)}</td>
                 <td>${formatDateTime(c.thoiGianKetThuc)}</td>
                 <td>${c.sucChua}</td>
-                <td><span class="badge ${c.trangThai}">${c.trangThai}</span></td>
+                <td><span class="badge ${c.trangThai}">${trangThaiCaThiLabel(c.trangThai)}</span></td>
                 <td>
                     <div class="actions-cell">
                         <button class="btn-sm btn-del" onclick="cancelSession(${c.caThiId})">🗑️ Hủy</button>
@@ -59,7 +59,18 @@ function formatDateTime(iso) {
     if (!iso) return "";
     const d = new Date(iso);
     const pad = n => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${pad(d.getFullYear())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function trangThaiCaThiLabel(tt) {
+    const map = {
+        Du_kien: "Dự kiến",
+        Cho_xep: "Chờ xếp",
+        Da_xep:  "Đã xếp",
+        Dong:    "Đã đóng",
+        Huy:     "Đã hủy"
+    };
+    return map[tt] || tt;
 }
 
 document.getElementById("btnAdd").onclick = () => {

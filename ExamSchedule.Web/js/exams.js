@@ -42,7 +42,7 @@ async function loadExams() {
                 <td>${k.loaiChungChi}</td>
                 <td>${formatDate(k.thoiGianBatDauDk)}</td>
                 <td>${formatDate(k.thoiGianKetThucDk)}</td>
-                <td><span class="badge ${k.trangThai}">${k.trangThai}</span></td>
+                <td><span class="badge ${k.trangThai}">${trangThaiLabel(k.trangThai)}</span></td>
                 <td>${k.soCaThi || 0}</td>
                 <td>
                     <div class="actions-cell">
@@ -57,6 +57,16 @@ async function loadExams() {
     }
 }
 
+function trangThaiLabel(tt) {
+    const map = {
+        MoiTao: "Mới tạo",
+        DangLapLich: "Đang lập lịch",
+        DangThi: "Đang thi",
+        KetThuc: "Kết thúc",
+        Huy: "Đã hủy"
+    };
+    return map[tt] || tt;
+}
 function formatDate(iso) {
     if (!iso) return "";
     return new Date(iso).toLocaleDateString("vi-VN");

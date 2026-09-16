@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đổi mật khẩu</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="page-header">
+            <div>
+                <div class="title">Đổi mật khẩu</div>
+                <div class="subtitle">Bảo mật tài khoản của bạn</div>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 560px; padding: 28px;">
+            <form id="formChangePw">
+                <label>Mật khẩu hiện tại
+                    <input type="password" id="oldPw" required autocomplete="current-password">
+                </label>
+                <label>Mật khẩu mới (≥ 6 ký tự)
+                    <input type="password" id="newPw" required minlength="6" autocomplete="new-password">
+                </label>
+                <label>Nhập lại mật khẩu mới
+                    <input type="password" id="confirmPw" required minlength="6" autocomplete="new-password">
+                </label>
+                <div class="actions">
+                    <button type="submit">Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+        if (!getToken()) location.href = "index.html";
+        renderLayout("Đổi mật khẩu", "");
+
+        document.getElementById("formChangePw").onsubmit = async (e) => {
+            e.preventDefault();
+            const oldPw = document.getElementById("oldPw").value;
+            const newPw = document.getElementById("newPw").value;
+            const confirmPw = document.getElementById("confirmPw").value;
+
+            if (newPw !== confirmPw) { toast("Mật khẩu xác nhận không khớp!", "error"); return; }
+
+            try {
+                await apiFetch("/auth/change-password", {
+                    method: "POST",
+                    body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw, confirmPassword: confirmPw })
+                });
+                toast("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", "success");
+                setTimeout(() => { clearTokens(); location.href = "index.html"; }, 1500);
+            } catch (err) {
+                toast(err.message, "error");
+            }
+        };
+    </script>
+</body>
+</html>

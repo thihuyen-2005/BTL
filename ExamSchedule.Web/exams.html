@@ -17,14 +17,15 @@
         </div>
 
         <div class="toolbar">
-            <input id="search" placeholder="🔍 Tìm theo mã hoặc tên...">
+            <input id="search" placeholder="🔍 Tìm kiếm">
             <select id="filterStatus">
-                <option value="">Tất cả trạng thái</option>
-                <option>MoiTao</option>
-                <option>DangLapLich</option>
-                <option>DangThi</option>
-                <option>KetThuc</option>
-                <option>Huy</option>
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="MoiTao">Mới tạo</option>
+                    <option value="DangLapLich">Đang lập lịch</option>
+                    <option value="DangThi">Đang thi</option>
+                    <option value="KetThuc">Kết thúc</option>
+                    <option value="Huy">Đã hủy</option>
+                </select>
             </select>
             <div class="spacer"></div>
             <button class="btn btn-primary" id="btnAdd">➕ Thêm kỳ thi</button>
@@ -62,7 +63,11 @@
                     <input id="tenKyThi" required maxlength="200" placeholder="VD: ICDL đợt 9/2026">
                 </label>
                 <label>Loại chứng chỉ
-                    <input id="loaiChungChi" required maxlength="50" placeholder="VD: ICDL, MOS">
+                    <select id="loaiChungChi" required>
+                        <option value="">-- Chọn loại --</option>
+                        <option value="ICDL">ICDL — Tin học văn phòng quốc tế</option>
+                        <option value="MOS">MOS — Microsoft Office Specialist</option>
+                    </select>
                 </label>
                 <label>Ngày bắt đầu đăng ký
                     <input type="date" id="batDauDk" required>
