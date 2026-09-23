@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Encodings.Web;
 using ExamSchedule.Api.Data;
 using ExamSchedule.Api.Entities;
 using ExamSchedule.Api.Services;
@@ -11,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ===== Kết nối MySQL =====
 var connStr = builder.Configuration.GetConnectionString("Default")!;
+if (!connStr.Contains("CharSet=", StringComparison.OrdinalIgnoreCase))
+    connStr += ";CharSet=utf8mb4";
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseMySql(connStr, ServerVersion.AutoDetect(connStr)));
 
@@ -53,7 +56,10 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("IsStudent",     p => p.RequireRole("SinhVien"));
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // ===== Swagger + nút Authorize =====

@@ -10,3 +10,9 @@ public record LoginResponse(
     int ExpiresIn,
     string Role,
     string FullName);
+
+public record CurrentUserResponse(
+    int UserId,
+    string Username,
+    string Role,
+    string FullName);

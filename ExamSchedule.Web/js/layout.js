@@ -10,7 +10,7 @@ const MENU = [
     { section: "Quản lý" },
     { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams",
       roles: ["Admin", "CBKT", "QuanLy"] },
-    { href: "exam-sessions.html",   icon: "🕐", label: "Ca thi",           active: "exam-sessions",
+    { href: "exams.html",            icon: "🕐", label: "Ca thi",           active: "exam-sessions",
       roles: ["Admin", "CBKT", "QuanLy"] },
     { href: "#",                    icon: "👤", label: "Giám thị",         disabled: true, tag: "Sắp có",
       roles: ["Admin", "CBKT"] },
@@ -108,6 +108,18 @@ function renderLayout(pageTitle, pageSubtitle) {
             ${topbarHTML}
             <main class="main-content">${existingMain}</main>
         </div>`;
+
+    // Đồng bộ tên từ database để loại bỏ dữ liệu tên cũ trong localStorage.
+    apiFetch("/auth/me").then(user => {
+        localStorage.setItem("fullName", user.fullName);
+        localStorage.setItem("role", user.role);
+        const nameEl = document.querySelector(".user-info .name");
+        const roleEl = document.querySelector(".user-info .role");
+        if (nameEl) nameEl.textContent = user.fullName;
+        if (roleEl) roleEl.textContent = user.role;
+        const welcomeEl = document.getElementById("welcomeName");
+        if (welcomeEl) welcomeEl.textContent = `Xin chào, ${user.fullName} 👋`;
+    }).catch(() => {});
 
     // ===== Logout =====
     document.getElementById("btnLogout").onclick = async () => {

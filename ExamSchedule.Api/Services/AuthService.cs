@@ -66,6 +66,20 @@ public class AuthService
             user.FullName);
     }
 
+    public async Task<CurrentUserResponse> GetCurrentUserAsync(int userId)
+    {
+        var user = await _db.Users
+            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.UserId == userId)
+            ?? throw new UnauthorizedAccessException("Phiên đăng nhập không hợp lệ.");
+
+        return new CurrentUserResponse(
+            user.UserId,
+            user.Username,
+            user.UserRoles.Select(ur => ur.Role.RoleName).FirstOrDefault() ?? "SinhVien",
+            user.FullName);
+    }
+
     public async Task LogoutAsync(int userId)
     {
         var user = await _db.Users.FindAsync(userId);

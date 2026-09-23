@@ -1,8 +1,7 @@
 if (!getToken()) location.href = "index.html";
 
-const kyThiId = parseInt(new URLSearchParams(location.search).get("kyThiId"));
-if (!kyThiId) {
-    alert("Thiếu kyThiId trong URL");
+const kyThiId = Number(new URLSearchParams(location.search).get("kyThiId"));
+if (!Number.isInteger(kyThiId) || kyThiId <= 0) {
     location.href = "exams.html";
 }
 

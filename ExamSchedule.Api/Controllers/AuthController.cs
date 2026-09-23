@@ -33,6 +33,14 @@ public class AuthController : ControllerBase
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
     }
 
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> Me()
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        return Ok(await _auth.GetCurrentUserAsync(id));
+    }
+
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()

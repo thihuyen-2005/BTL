@@ -19,7 +19,7 @@ public class ExceptionMiddleware
     private static async Task Write(HttpContext ctx, int code, string msg)
     {
         ctx.Response.StatusCode = code;
-        ctx.Response.ContentType = "application/json";
+        ctx.Response.ContentType = "application/json; charset=utf-8";
         await ctx.Response.WriteAsync(JsonSerializer.Serialize(new { error = msg }));
     }
 }

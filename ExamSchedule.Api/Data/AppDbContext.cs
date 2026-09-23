@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
+        mb.HasCharSet("utf8mb4");
+
         // ===== AppUser =====
         mb.Entity<AppUser>(e =>
         {

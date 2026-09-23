@@ -68,6 +68,12 @@ CREATE TABLE `app_users` (
 LOCK TABLES `app_users` WRITE;
 /*!40000 ALTER TABLE `app_users` DISABLE KEYS */;
 INSERT INTO `app_users` VALUES (12,'admin','$2a$11$KI4niluxlS.2RDqjrzB/vuEMaHDXsznAbwUz9M5qa6oBNJnmAD0vW','Quß║ún trß╗ï vi├¬n','admin@example.com',1,'tPwfdFDFFkWpHpuiLLgaIA==','2026-09-26 15:26:52.583352','2026-09-16 04:47:32.986511'),(13,'cbkt01','$2a$11$jxJGxh/38CMyMwlGxaCcpO9aULDD5W4KizDpKLxyJMFA1h3DLkQGK','Nguyß╗àn V─ân C╞░ß╗¥ng','cbkt@example.com',1,NULL,NULL,'2026-09-16 04:47:33.619868'),(14,'quanly01','$2a$11$dc3j1vmrvXhOdLO0rBgFzuMzGULM8Q6K.ll0H/RyGY1oJDQoaoBM6','Trß║ºn Thß╗ï D╞░╞íng','quanly@example.com',1,NULL,NULL,'2026-09-16 04:47:33.842535'),(15,'ketoan01','$2a$11$z0bEY3FE27JA02zTx4SsOuAz2/lHuqFeUltFvqV4a1nXv1zNNMuUa','L├¬ Thu H╞░ß╗¥ng','ketoan@example.com',1,NULL,NULL,'2026-09-16 04:47:34.058605');
+UPDATE `app_users` SET `full_name` = CASE `username`
+  WHEN 'admin' THEN 'Quản trị viên'
+  WHEN 'cbkt01' THEN 'Nguyễn Văn Cường'
+  WHEN 'quanly01' THEN 'Trần Thị Dương'
+  WHEN 'ketoan01' THEN 'Lê Thu Hường'
+END WHERE `username` IN ('admin', 'cbkt01', 'quanly01', 'ketoan01');
 /*!40000 ALTER TABLE `app_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -168,6 +174,14 @@ CREATE TABLE `ky_thi` (
 LOCK TABLES `ky_thi` WRITE;
 /*!40000 ALTER TABLE `ky_thi` DISABLE KEYS */;
 INSERT INTO `ky_thi` VALUES (1,'ICDL-09-2026','ICDL ─æß╗út 9/2026','ICDL','2026-09-01 00:00:00.000000','2026-09-20 00:00:00.000000','KetThuc','─Éß╗út thi th├íng 9','2026-09-14 05:07:20.700645','2026-09-19 15:21:54.183487'),(3,'MOS - 10 - 2026','Chß╗⌐ng chß╗ë tin hß╗ìc v─ân ph├▓ng MOS ─æß╗út 10/2026','MOS','2026-09-20 00:00:00.000000','2026-09-30 00:00:00.000000','DangLapLich','Chß╗ë d├ánh cho sinh vi├¬n n─âm cuß╗æi','2026-09-16 04:51:05.143227','2026-09-16 05:27:08.633074');
+UPDATE `ky_thi` SET `ten_ky_thi` = CASE `ky_thi_id`
+  WHEN 1 THEN 'ICDL đợt 9/2026'
+  WHEN 3 THEN 'Chứng chỉ tin học văn phòng MOS đợt 10/2026'
+END,
+`ghi_chu` = CASE `ky_thi_id`
+  WHEN 1 THEN 'Đợt thi tháng 9'
+  WHEN 3 THEN 'Chỉ dành cho sinh viên năm cuối'
+END WHERE `ky_thi_id` IN (1, 3);
 /*!40000 ALTER TABLE `ky_thi` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -196,6 +210,7 @@ CREATE TABLE `phong_thi` (
 LOCK TABLES `phong_thi` WRITE;
 /*!40000 ALTER TABLE `phong_thi` DISABLE KEYS */;
 INSERT INTO `phong_thi` VALUES (1,'A1-101','Ph├▓ng A1-101',25,'T├▓a A1'),(2,'A1-102','Ph├▓ng A1-102',25,'T├▓a A1'),(3,'A1-103','Ph├▓ng A1-103',25,'T├▓a A1'),(4,'A1-104','Ph├▓ng A1-104',25,'T├▓a A1'),(5,'A1-105','Ph├▓ng A1-105',25,'T├▓a A1'),(6,'A1-201','Ph├▓ng A1-201',25,'T├▓a A1'),(7,'A1-202','Ph├▓ng A1-202',25,'T├▓a A1'),(8,'A1-203','Ph├▓ng A1-203',25,'T├▓a A1'),(9,'A1-204','Ph├▓ng A1-204',25,'T├▓a A1'),(10,'A1-205','Ph├▓ng A1-205',25,'T├▓a A1'),(11,'A1-301','Ph├▓ng A1-301',25,'T├▓a A1'),(12,'A1-302','Ph├▓ng A1-302',25,'T├▓a A1'),(13,'A1-303','Ph├▓ng A1-303',25,'T├▓a A1'),(14,'A1-304','Ph├▓ng A1-304',25,'T├▓a A1'),(15,'A1-305','Ph├▓ng A1-305',25,'T├▓a A1'),(16,'A1-401','Ph├▓ng A1-401',25,'T├▓a A1'),(17,'A1-402','Ph├▓ng A1-402',25,'T├▓a A1'),(18,'A1-403','Ph├▓ng A1-403',25,'T├▓a A1'),(19,'A1-404','Ph├▓ng A1-404',25,'T├▓a A1'),(20,'A1-405','Ph├▓ng A1-405',25,'T├▓a A1'),(21,'A2-106','Ph├▓ng A2-106',25,'T├▓a A2'),(22,'A2-107','Ph├▓ng A2-107',25,'T├▓a A2'),(23,'A2-108','Ph├▓ng A2-108',25,'T├▓a A2'),(24,'A2-109','Ph├▓ng A2-109',25,'T├▓a A2'),(25,'A2-110','Ph├▓ng A2-110',25,'T├▓a A2'),(26,'A2-111','Ph├▓ng A2-111',25,'T├▓a A2'),(27,'A2-206','Ph├▓ng A2-206',25,'T├▓a A2'),(28,'A2-207','Ph├▓ng A2-207',25,'T├▓a A2'),(29,'A2-208','Ph├▓ng A2-208',25,'T├▓a A2'),(30,'A2-209','Ph├▓ng A2-209',25,'T├▓a A2'),(31,'A2-210','Ph├▓ng A2-210',25,'T├▓a A2'),(32,'A2-211','Ph├▓ng A2-211',25,'T├▓a A2'),(33,'A2-306','Ph├▓ng A2-306',25,'T├▓a A2'),(34,'A2-307','Ph├▓ng A2-307',25,'T├▓a A2'),(35,'A2-308','Ph├▓ng A2-308',25,'T├▓a A2'),(36,'A2-309','Ph├▓ng A2-309',25,'T├▓a A2'),(37,'A2-310','Ph├▓ng A2-310',25,'T├▓a A2'),(38,'A2-311','Ph├▓ng A2-311',25,'T├▓a A2'),(39,'A2-406','Ph├▓ng A2-406',25,'T├▓a A2'),(40,'A2-407','Ph├▓ng A2-407',25,'T├▓a A2'),(41,'A2-408','Ph├▓ng A2-408',25,'T├▓a A2'),(42,'A2-409','Ph├▓ng A2-409',25,'T├▓a A2'),(43,'A2-410','Ph├▓ng A2-410',25,'T├▓a A2'),(44,'A2-411','Ph├▓ng A2-411',25,'T├▓a A2'),(45,'A3-101','Ph├▓ng m├íy A3-101',25,'T├▓a A3'),(46,'A3-102','Ph├▓ng m├íy A3-102',25,'T├▓a A3'),(47,'A3-103','Ph├▓ng m├íy A3-103',25,'T├▓a A3'),(48,'A3-104','Ph├▓ng m├íy A3-104',25,'T├▓a A3'),(49,'A3-105','Ph├▓ng m├íy A3-105',25,'T├▓a A3'),(50,'A3-201','Ph├▓ng m├íy A3-201',25,'T├▓a A3'),(51,'A3-202','Ph├▓ng m├íy A3-202',25,'T├▓a A3'),(52,'A3-203','Ph├▓ng m├íy A3-203',25,'T├▓a A3'),(53,'A3-204','Ph├▓ng m├íy A3-204',25,'T├▓a A3'),(54,'A3-205','Ph├▓ng m├íy A3-205',25,'T├▓a A3'),(55,'A3-301','Ph├▓ng m├íy A3-301',25,'T├▓a A3'),(56,'A3-302','Ph├▓ng m├íy A3-302',25,'T├▓a A3'),(57,'A3-303','Ph├▓ng m├íy A3-303',25,'T├▓a A3'),(58,'A3-304','Ph├▓ng m├íy A3-304',25,'T├▓a A3'),(59,'A3-305','Ph├▓ng m├íy A3-305',25,'T├▓a A3');
+UPDATE `phong_thi` SET `ten_phong` = CONCAT(CASE WHEN `ma_phong` LIKE 'A3-%' THEN 'Phòng máy ' ELSE 'Phòng ' END, `ma_phong`), `vi_tri` = CONCAT('Tòa ', LEFT(`ma_phong`, 2));
 /*!40000 ALTER TABLE `phong_thi` ENABLE KEYS */;
 UNLOCK TABLES;
 

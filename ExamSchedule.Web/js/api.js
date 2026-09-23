@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://friendly-cod-97j75prr475wh94xw-5000.app.github.dev/api";
 
 function getToken()    { return localStorage.getItem("accessToken"); }
 function getRefresh()  { return localStorage.getItem("refreshToken"); }
