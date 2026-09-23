@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<CaThi> CaThis => Set<CaThi>();
     public DbSet<PhongThi> PhongThis => Set<PhongThi>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ProctorProfile> ProctorProfiles => Set<ProctorProfile>();
+    public DbSet<ProctorAssignment> ProctorAssignments => Set<ProctorAssignment>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -55,6 +57,25 @@ public class AppDbContext : DbContext
             e.Property(x => x.RoleId).HasColumnName("role_id");
             e.HasOne(x => x.User).WithMany(u => u.UserRoles).HasForeignKey(x => x.UserId);
             e.HasOne(x => x.Role).WithMany(r => r.UserRoles).HasForeignKey(x => x.RoleId);
+        });
+
+        mb.Entity<ProctorProfile>(e =>
+        {
+            e.ToTable("proctor_profiles");
+            e.HasKey(x => x.ProctorProfileId);
+            e.Property(x => x.ProctorProfileId).HasColumnName("proctor_profile_id");
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.StaffCode).HasColumnName("staff_code").HasMaxLength(50);
+            e.Property(x => x.Department).HasColumnName("department").HasMaxLength(150);
+            e.Property(x => x.Phone).HasColumnName("phone").HasMaxLength(30);
+            e.Property(x => x.IsActive).HasColumnName("is_active");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+            e.HasIndex(x => x.UserId).IsUnique();
+            e.HasIndex(x => x.StaffCode).IsUnique();
+            e.HasOne(x => x.User).WithOne(x => x.ProctorProfile)
+                .HasForeignKey<ProctorProfile>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ===== PhongThi =====
@@ -103,11 +124,31 @@ public class AppDbContext : DbContext
             e.Property(x => x.GhiChu).HasColumnName("ghi_chu").HasMaxLength(255);
             e.Property(x => x.NgayTao).HasColumnName("ngay_tao");
             e.Property(x => x.NgayCapNhat).HasColumnName("ngay_cap_nhat");
+            e.Property(x => x.RequiredProctorCount).HasColumnName("required_proctor_count").HasDefaultValue(3);
 
             e.HasOne(x => x.KyThi).WithMany(k => k.CaThis)
              .HasForeignKey(x => x.KyThiId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.PhongThi).WithMany()
              .HasForeignKey(x => x.PhongThiId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<ProctorAssignment>(e =>
+        {
+            e.ToTable("proctor_assignments");
+            e.HasKey(x => x.ProctorAssignmentId);
+            e.Property(x => x.ProctorAssignmentId).HasColumnName("proctor_assignment_id");
+            e.Property(x => x.CaThiId).HasColumnName("ca_thi_id");
+            e.Property(x => x.ProctorProfileId).HasColumnName("proctor_profile_id");
+            e.Property(x => x.Role).HasColumnName("role").HasConversion<string>().HasMaxLength(30);
+            e.Property(x => x.Status).HasColumnName("status").HasConversion<string>();
+            e.Property(x => x.AssignedAt).HasColumnName("assigned_at");
+            e.Property(x => x.CancelledAt).HasColumnName("cancelled_at");
+            e.HasIndex(x => new { x.CaThiId, x.ProctorProfileId }).IsUnique();
+            e.HasIndex(x => new { x.CaThiId, x.Role }).IsUnique();
+            e.HasOne(x => x.CaThi).WithMany(x => x.ProctorAssignments)
+                .HasForeignKey(x => x.CaThiId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.ProctorProfile).WithMany(x => x.Assignments)
+                .HasForeignKey(x => x.ProctorProfileId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // ===== AuditLog =====

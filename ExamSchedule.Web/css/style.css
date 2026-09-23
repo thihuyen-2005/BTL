@@ -390,6 +390,7 @@ td .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
     box-shadow: var(--shadow-lg);
     animation: slideUp .18s ease;
 }
+.modal-wide { width: min(760px, 94vw); }
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }

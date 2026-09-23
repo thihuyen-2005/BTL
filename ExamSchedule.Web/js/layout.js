@@ -12,7 +12,7 @@ const MENU = [
       roles: ["Admin", "CBKT", "QuanLy"] },
     { href: "exams.html",            icon: "🕐", label: "Ca thi",           active: "exam-sessions",
       roles: ["Admin", "CBKT", "QuanLy"] },
-    { href: "#",                    icon: "👤", label: "Giám thị",         disabled: true, tag: "Sắp có",
+        { href: "proctors.html",        icon: "👤", label: "Giám thị",         active: "proctors",
       roles: ["Admin", "CBKT"] },
     { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có",
       roles: ["Admin", "CBKT"] },

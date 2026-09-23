@@ -143,6 +143,7 @@ LOCK TABLES `ca_thi` WRITE;
 INSERT INTO `ca_thi` VALUES (5,1,9,'2026-09-18 08:00:00.000000','2026-09-18 09:00:00.000000',25,'Du_kien','','2026-09-16 04:52:59.742948',NULL),(6,1,1,'2026-09-18 08:00:00.000000','2026-09-18 09:00:00.000000',25,'Huy','','2026-09-16 05:08:55.159608','2026-09-16 05:25:11.799203'),(7,1,10,'2026-09-18 08:00:00.000000','2026-09-18 09:00:00.000000',25,'Du_kien','','2026-09-16 05:26:16.322033',NULL),(8,3,29,'2026-10-03 09:00:00.000000','2026-10-03 10:00:00.000000',25,'Du_kien','','2026-09-16 05:27:08.583436',NULL),(9,3,44,'2026-10-03 09:00:00.000000','2026-10-03 10:00:00.000000',30,'Du_kien','','2026-09-19 15:29:07.219376',NULL);
 /*!40000 ALTER TABLE `ca_thi` ENABLE KEYS */;
 UNLOCK TABLES;
+ALTER TABLE `ca_thi` ADD COLUMN `required_proctor_count` int NOT NULL DEFAULT 3;
 
 --
 -- Table structure for table `ky_thi`
@@ -265,6 +266,49 @@ LOCK TABLES `user_roles` WRITE;
 INSERT INTO `user_roles` VALUES (12,1),(13,2),(14,3),(15,4);
 /*!40000 ALTER TABLE `user_roles` ENABLE KEYS */;
 UNLOCK TABLES;
+
+DROP TABLE IF EXISTS `proctor_assignments`;
+DROP TABLE IF EXISTS `proctor_profiles`;
+CREATE TABLE `proctor_profiles` (
+  `proctor_profile_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `staff_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `department` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `phone` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`proctor_profile_id`),
+  UNIQUE KEY `IX_proctor_profiles_user_id` (`user_id`),
+  UNIQUE KEY `IX_proctor_profiles_staff_code` (`staff_code`),
+  CONSTRAINT `FK_proctor_profiles_app_users_user_id`
+    FOREIGN KEY (`user_id`) REFERENCES `app_users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+INSERT INTO `proctor_profiles`
+  (`proctor_profile_id`, `user_id`, `staff_code`, `department`, `is_active`, `created_at`)
+VALUES
+  (1,12,'CB-012','Phòng Khảo thí',1,UTC_TIMESTAMP(6)),
+  (2,13,'CB-013','Phòng Khảo thí',1,UTC_TIMESTAMP(6)),
+  (3,14,'CB-014','Phòng Khảo thí',1,UTC_TIMESTAMP(6));
+
+CREATE TABLE `proctor_assignments` (
+  `proctor_assignment_id` int NOT NULL AUTO_INCREMENT,
+  `ca_thi_id` int NOT NULL,
+  `proctor_profile_id` int NOT NULL,
+  `role` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `status` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `assigned_at` datetime(6) NOT NULL,
+  `cancelled_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`proctor_assignment_id`),
+  UNIQUE KEY `IX_proctor_assignments_ca_thi_id_proctor_profile_id` (`ca_thi_id`,`proctor_profile_id`),
+  UNIQUE KEY `IX_proctor_assignments_ca_thi_id_role` (`ca_thi_id`,`role`),
+  KEY `IX_proctor_assignments_ca_thi_id` (`ca_thi_id`),
+  KEY `IX_proctor_assignments_proctor_profile_id` (`proctor_profile_id`),
+  CONSTRAINT `FK_proctor_assignments_ca_thi_ca_thi_id`
+    FOREIGN KEY (`ca_thi_id`) REFERENCES `ca_thi` (`ca_thi_id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_proctor_assignments_proctor_profiles_proctor_profile_id`
+    FOREIGN KEY (`proctor_profile_id`) REFERENCES `proctor_profiles` (`proctor_profile_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

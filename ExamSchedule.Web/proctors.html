@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Giám thị</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="page-header">
+            <div>
+                <div class="title">Quản lý Giám thị</div>
+                <div class="subtitle">Danh sách cán bộ và lịch coi thi</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <input id="search" placeholder="Tìm mã, họ tên, đơn vị">
+            <select id="filterStatus">
+                <option value="">Tất cả trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Không hoạt động</option>
+                <option value="free">Đang rảnh</option>
+                <option value="busy">Đã có lịch</option>
+            </select>
+            <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnRefresh">↻ Làm mới</button>
+        </div>
+
+        <section id="assignmentPanel" class="card hidden" style="margin-bottom:18px;">
+            <div class="card-header">
+                <h3 id="assignmentTitle">Phân công giám thị</h3>
+                <button class="btn btn-accent" id="btnAutoAssign">⚡ Phân công tự động</button>
+            </div>
+            <div style="padding:14px;">
+                <div id="assignmentInfo" style="color:#64748b; margin-bottom:12px;"></div>
+                <div class="toolbar" style="margin-bottom:12px;">
+                    <select id="proctorSelect"></select>
+                    <select id="roleSelect">
+                        <option value="Truong_ca">Trưởng ca</option>
+                        <option value="Giam_thi_1">Giám thị 1</option>
+                        <option value="Giam_thi_2">Giám thị 2</option>
+                    </select>
+                    <button class="btn btn-primary" id="btnAssign">Phân công</button>
+                </div>
+                <div id="assignmentList"></div>
+            </div>
+        </section>
+
+        <div id="countInfo" style="color:#64748b; font-size:13px; margin-bottom:12px;"></div>
+        <div class="card">
+            <table id="tblProctors">
+                <thead>
+                    <tr>
+                        <th>Mã cán bộ</th>
+                        <th>Họ tên</th>
+                        <th>Đơn vị</th>
+                        <th>Email</th>
+                        <th>Trạng thái</th>
+                        <th>Số ca</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="scheduleModal" class="modal hidden">
+        <div class="modal-content modal-wide">
+            <h2 id="scheduleTitle">Lịch coi thi</h2>
+            <div id="scheduleBody"></div>
+            <div class="actions"><button type="button" id="closeSchedule">Đóng</button></div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/proctors.js"></script>
+</body>
+</html>

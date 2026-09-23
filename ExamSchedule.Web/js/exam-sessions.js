@@ -45,6 +45,7 @@ async function loadSessions() {
                 <td><span class="badge ${c.trangThai}">${trangThaiCaThiLabel(c.trangThai)}</span></td>
                 <td>
                     <div class="actions-cell">
+                        <a class="btn-sm btn-view" href="proctors.html?caThiId=${c.caThiId}">👤 Phân công</a>
                         <button class="btn-sm btn-del" onclick="cancelSession(${c.caThiId})">🗑️ Hủy</button>
                     </div>
                 </td>
