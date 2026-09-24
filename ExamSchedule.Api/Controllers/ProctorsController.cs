@@ -43,11 +43,7 @@ public class ProctorsController : ControllerBase
     [HttpGet("me/schedule")]
     public async Task<IActionResult> GetMySchedule()
     {
-        var profile = (await _service.GetProctorsAsync(null, null, null))
-            .FirstOrDefault(p => p.UserId == CurrentUserId);
-        if (profile == null)
-            return Ok(Array.Empty<ProctorScheduleItemDto>());
-        return Ok(await _service.GetScheduleAsync(profile.ProctorProfileId, CurrentUserId));
+        return Ok(Array.Empty<ProctorScheduleItemDto>());
     }
 
     [HttpGet("assignments/{assignmentId:int}")]

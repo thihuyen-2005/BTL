@@ -13,5 +13,4 @@ public class AppUser
     public DateTime NgayTao { get; set; } = DateTime.UtcNow;
 
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
-    public ProctorProfile? ProctorProfile { get; set; }
 }

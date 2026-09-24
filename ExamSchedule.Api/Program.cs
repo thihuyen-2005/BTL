@@ -115,7 +115,7 @@ using (var scope = app.Services.CreateScope())
         );");
     var legacyProctorSchemaExists = db.Database.SqlQueryRaw<int>(@"
         SELECT COUNT(*) AS `Value` FROM information_schema.tables
-        WHERE table_schema = DATABASE() AND table_name = 'proctor_profiles'")
+        WHERE table_schema = DATABASE() AND table_name = 'giam_thi'")
         .Single() > 0;
     if (legacyProctorSchemaExists)
     {
@@ -141,39 +141,36 @@ using (var scope = app.Services.CreateScope())
                 ADD COLUMN `required_proctor_count` int NOT NULL DEFAULT 3;");
     }
     db.Database.ExecuteSqlRaw(@"
-        CREATE TABLE IF NOT EXISTS `proctor_profiles` (
-            `proctor_profile_id` int NOT NULL AUTO_INCREMENT,
-            `user_id` int NOT NULL,
-            `staff_code` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
-            `department` varchar(150) CHARACTER SET utf8mb4 NULL,
-            `phone` varchar(30) CHARACTER SET utf8mb4 NULL,
-            `is_active` tinyint(1) NOT NULL,
-            `created_at` datetime(6) NOT NULL,
+        CREATE TABLE IF NOT EXISTS `giam_thi` (
+            `giam_thi_id` int NOT NULL AUTO_INCREMENT,
+            `ma_giam_thi` varchar(50) CHARACTER SET utf8mb4 NOT NULL,
+            `ho_ten` varchar(100) CHARACTER SET utf8mb4 NOT NULL,
+            `email` varchar(100) CHARACTER SET utf8mb4 NULL,
+            `so_dien_thoai` varchar(20) CHARACTER SET utf8mb4 NULL,
+            `don_vi` varchar(150) CHARACTER SET utf8mb4 NULL,
+            `trang_thai` tinyint(1) NOT NULL DEFAULT 1,
+            `ngay_tao` datetime(6) NOT NULL,
             `updated_at` datetime(6) NULL,
-            PRIMARY KEY (`proctor_profile_id`),
-            UNIQUE KEY `IX_proctor_profiles_user_id` (`user_id`),
-            UNIQUE KEY `IX_proctor_profiles_staff_code` (`staff_code`),
-            CONSTRAINT `FK_proctor_profiles_app_users_user_id`
-                FOREIGN KEY (`user_id`) REFERENCES `app_users` (`user_id`) ON DELETE RESTRICT
+            PRIMARY KEY (`giam_thi_id`),
+            UNIQUE KEY `IX_giam_thi_ma_giam_thi` (`ma_giam_thi`)
         ) CHARACTER SET=utf8mb4;
-        CREATE TABLE IF NOT EXISTS `proctor_assignments` (
-            `proctor_assignment_id` int NOT NULL AUTO_INCREMENT,
+        CREATE TABLE IF NOT EXISTS `giam_thi_phan_cong` (
+            `phan_cong_id` int NOT NULL AUTO_INCREMENT,
             `ca_thi_id` int NOT NULL,
-            `proctor_profile_id` int NOT NULL,
-            `role` varchar(30) CHARACTER SET utf8mb4 NOT NULL,
-            `status` varchar(30) CHARACTER SET utf8mb4 NOT NULL,
-            `assigned_at` datetime(6) NOT NULL,
-            `cancelled_at` datetime(6) NULL,
-            PRIMARY KEY (`proctor_assignment_id`),
-            UNIQUE KEY `IX_proctor_assignments_ca_thi_id_proctor_profile_id`
-                (`ca_thi_id`, `proctor_profile_id`),
-            UNIQUE KEY `IX_proctor_assignments_ca_thi_id_role` (`ca_thi_id`, `role`),
-            KEY `IX_proctor_assignments_ca_thi_id` (`ca_thi_id`),
-            KEY `IX_proctor_assignments_proctor_profile_id` (`proctor_profile_id`),
-            CONSTRAINT `FK_proctor_assignments_ca_thi_ca_thi_id`
+            `giam_thi_id` int NOT NULL,
+            `vai_tro` varchar(30) CHARACTER SET utf8mb4 NOT NULL,
+            `trang_thai` varchar(30) CHARACTER SET utf8mb4 NOT NULL,
+            `ngay_phan_cong` datetime(6) NOT NULL,
+            `ngay_huy` datetime(6) NULL,
+            PRIMARY KEY (`phan_cong_id`),
+            UNIQUE KEY `IX_giam_thi_phan_cong_ca_thi_id_giam_thi_id` (`ca_thi_id`, `giam_thi_id`),
+            UNIQUE KEY `IX_giam_thi_phan_cong_ca_thi_id_vai_tro` (`ca_thi_id`, `vai_tro`),
+            KEY `IX_giam_thi_phan_cong_ca_thi_id` (`ca_thi_id`),
+            KEY `IX_giam_thi_phan_cong_giam_thi_id` (`giam_thi_id`),
+            CONSTRAINT `FK_giam_thi_phan_cong_ca_thi_ca_thi_id`
                 FOREIGN KEY (`ca_thi_id`) REFERENCES `ca_thi` (`ca_thi_id`) ON DELETE RESTRICT,
-            CONSTRAINT `FK_proctor_assignments_proctor_profiles_proctor_profile_id`
-                FOREIGN KEY (`proctor_profile_id`) REFERENCES `proctor_profiles` (`proctor_profile_id`) ON DELETE RESTRICT
+            CONSTRAINT `FK_giam_thi_phan_cong_giam_thi_giam_thi_id`
+                FOREIGN KEY (`giam_thi_id`) REFERENCES `giam_thi` (`giam_thi_id`) ON DELETE RESTRICT
         ) CHARACTER SET=utf8mb4;
         INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
         VALUES ('20260923133609_AddProctorManagementGenerated', '8.0.0');");
@@ -221,7 +218,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($">>> Created: {s.Username,-10} | {s.Password,-14} | {s.Role}");
     }
 
-    // Existing users are the source of truth for proctor profiles.
+    // Seed hồ sơ giám thị từ các quản lý hiện có, nhưng không phụ thuộc vào bảng app_users.
     var proctorUsers = db.Users
         .Include(u => u.UserRoles)
         .ThenInclude(ur => ur.Role)
@@ -230,13 +227,14 @@ using (var scope = app.Services.CreateScope())
         .ToList();
     foreach (var user in proctorUsers)
     {
-        if (db.ProctorProfiles.Any(p => p.UserId == user.UserId))
+        if (db.ProctorProfiles.Any(p => p.StaffCode == $"GT-{user.UserId:000}"))
             continue;
 
         db.ProctorProfiles.Add(new ProctorProfile
         {
-            UserId = user.UserId,
-            StaffCode = $"CB-{user.UserId:000}",
+            StaffCode = $"GT-{user.UserId:000}",
+            FullName = user.FullName,
+            Email = user.Email,
             Department = "Phòng Khảo thí",
             IsActive = true
         });

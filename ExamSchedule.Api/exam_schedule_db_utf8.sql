@@ -267,31 +267,58 @@ INSERT INTO `user_roles` VALUES (12,1),(13,2),(14,3),(15,4);
 /*!40000 ALTER TABLE `user_roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
-DROP TABLE IF EXISTS `proctor_assignments`;
-DROP TABLE IF EXISTS `proctor_profiles`;
-CREATE TABLE `proctor_profiles` (
-  `proctor_profile_id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `staff_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `department` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `phone` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL,
-  `created_at` datetime(6) NOT NULL,
-  `updated_at` datetime(6) DEFAULT NULL,
-  PRIMARY KEY (`proctor_profile_id`),
-  UNIQUE KEY `IX_proctor_profiles_user_id` (`user_id`),
-  UNIQUE KEY `IX_proctor_profiles_staff_code` (`staff_code`),
-  CONSTRAINT `FK_proctor_profiles_app_users_user_id`
-    FOREIGN KEY (`user_id`) REFERENCES `app_users` (`user_id`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-INSERT INTO `proctor_profiles`
-  (`proctor_profile_id`, `user_id`, `staff_code`, `department`, `is_active`, `created_at`)
-VALUES
-  (1,12,'CB-012','Phòng Khảo thí',1,UTC_TIMESTAMP(6)),
-  (2,13,'CB-013','Phòng Khảo thí',1,UTC_TIMESTAMP(6)),
-  (3,14,'CB-014','Phòng Khảo thí',1,UTC_TIMESTAMP(6));
+DROP TABLE IF EXISTS `giam_thi_phan_cong`;
+DROP TABLE IF EXISTS `giam_thi`;
 
-CREATE TABLE `proctor_assignments` (
+CREATE TABLE `giam_thi` (
+  `giam_thi_id` int NOT NULL AUTO_INCREMENT,
+  `ma_giam_thi` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `ho_ten` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `so_dien_thoai` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `don_vi` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `trang_thai` tinyint(1) NOT NULL DEFAULT 1,
+  `ngay_tao` datetime(6) NOT NULL,
+  PRIMARY KEY (`giam_thi_id`),
+  UNIQUE KEY `IX_giam_thi_ma_giam_thi` (`ma_giam_thi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `giam_thi` (`giam_thi_id`, `ma_giam_thi`, `ho_ten`, `email`, `so_dien_thoai`, `don_vi`, `trang_thai`, `ngay_tao`) VALUES
+  (1,'GT-001','Nguyễn Văn An','nguyenvanan@gmail.com','0902001001','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (2,'GT-002','Trần Thị Bình','tranthibinh@gmail.com','0902001002','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (3,'GT-003','Lê Hoàng Cường','lehoangcuong@gmail.com','0902001003','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (4,'GT-004','Phạm Thị Duyên','phamthiduyen@gmail.com','0902001004','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (5,'GT-005','Hoàng Minh Đức','hoangminhduc@gmail.com','0902001005','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (6,'GT-006','Đỗ Thị Hạnh','dothihanh@gmail.com','0902001006','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (7,'GT-007','Trịnh Văn Hòa','trinhvanhoa@gmail.com','0902001007','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (8,'GT-008','Bùi Thị Lan','buithilan@gmail.com','0902001008','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (9,'GT-009','Ngô Đức Long','ngoduclong@gmail.com','0902001009','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (10,'GT-010','Vũ Thị Mai','vuthimai@gmail.com','0902001010','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (11,'GT-011','Cao Văn Nam','caovannam@gmail.com','0902001011','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (12,'GT-012','Đặng Thị Oanh','dangthioanh@gmail.com','0902001012','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (13,'GT-013','Lý Minh Phúc','lyminhphuc@gmail.com','0902001013','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (14,'GT-014','Tạ Thị Quỳnh','tathiquynh@gmail.com','0902001014','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (15,'GT-015','Huỳnh Văn Sơn','huynhvanson@gmail.com','0902001015','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000');
+
+CREATE TABLE `giam_thi_phan_cong` (
+  `phan_cong_id` int NOT NULL AUTO_INCREMENT,
+  `ca_thi_id` int NOT NULL,
+  `giam_thi_id` int NOT NULL,
+  `vai_tro` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `trang_thai` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `ngay_phan_cong` datetime(6) NOT NULL,
+  `ngay_huy` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`phan_cong_id`),
+  UNIQUE KEY `IX_giam_thi_phan_cong_ca_thi_id_giam_thi_id` (`ca_thi_id`,`giam_thi_id`),
+  UNIQUE KEY `IX_giam_thi_phan_cong_ca_thi_id_vai_tro` (`ca_thi_id`,`vai_tro`),
+  KEY `IX_giam_thi_phan_cong_ca_thi_id` (`ca_thi_id`),
+  KEY `IX_giam_thi_phan_cong_giam_thi_id` (`giam_thi_id`),
+  CONSTRAINT `FK_giam_thi_phan_cong_ca_thi_ca_thi_id`
+    FOREIGN KEY (`ca_thi_id`) REFERENCES `ca_thi` (`ca_thi_id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_giam_thi_phan_cong_giam_thi_giam_thi_id`
+    FOREIGN KEY (`giam_thi_id`) REFERENCES `giam_thi` (`giam_thi_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
   `proctor_assignment_id` int NOT NULL AUTO_INCREMENT,
   `ca_thi_id` int NOT NULL,
   `proctor_profile_id` int NOT NULL,

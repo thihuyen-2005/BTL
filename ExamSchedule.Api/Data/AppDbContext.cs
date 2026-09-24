@@ -61,21 +61,18 @@ public class AppDbContext : DbContext
 
         mb.Entity<ProctorProfile>(e =>
         {
-            e.ToTable("proctor_profiles");
+            e.ToTable("giam_thi");
             e.HasKey(x => x.ProctorProfileId);
-            e.Property(x => x.ProctorProfileId).HasColumnName("proctor_profile_id");
-            e.Property(x => x.UserId).HasColumnName("user_id");
-            e.Property(x => x.StaffCode).HasColumnName("staff_code").HasMaxLength(50);
-            e.Property(x => x.Department).HasColumnName("department").HasMaxLength(150);
-            e.Property(x => x.Phone).HasColumnName("phone").HasMaxLength(30);
-            e.Property(x => x.IsActive).HasColumnName("is_active");
-            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.ProctorProfileId).HasColumnName("giam_thi_id");
+            e.Property(x => x.StaffCode).HasColumnName("ma_giam_thi").HasMaxLength(50);
+            e.Property(x => x.FullName).HasColumnName("ho_ten").HasMaxLength(100);
+            e.Property(x => x.Email).HasColumnName("email").HasMaxLength(100);
+            e.Property(x => x.Department).HasColumnName("don_vi").HasMaxLength(150);
+            e.Property(x => x.Phone).HasColumnName("so_dien_thoai").HasMaxLength(20);
+            e.Property(x => x.IsActive).HasColumnName("trang_thai");
+            e.Property(x => x.CreatedAt).HasColumnName("ngay_tao");
             e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
-            e.HasIndex(x => x.UserId).IsUnique();
             e.HasIndex(x => x.StaffCode).IsUnique();
-            e.HasOne(x => x.User).WithOne(x => x.ProctorProfile)
-                .HasForeignKey<ProctorProfile>(x => x.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ===== PhongThi =====
@@ -134,15 +131,15 @@ public class AppDbContext : DbContext
 
         mb.Entity<ProctorAssignment>(e =>
         {
-            e.ToTable("proctor_assignments");
+            e.ToTable("giam_thi_phan_cong");
             e.HasKey(x => x.ProctorAssignmentId);
-            e.Property(x => x.ProctorAssignmentId).HasColumnName("proctor_assignment_id");
+            e.Property(x => x.ProctorAssignmentId).HasColumnName("phan_cong_id");
             e.Property(x => x.CaThiId).HasColumnName("ca_thi_id");
-            e.Property(x => x.ProctorProfileId).HasColumnName("proctor_profile_id");
-            e.Property(x => x.Role).HasColumnName("role").HasConversion<string>().HasMaxLength(30);
-            e.Property(x => x.Status).HasColumnName("status").HasConversion<string>();
-            e.Property(x => x.AssignedAt).HasColumnName("assigned_at");
-            e.Property(x => x.CancelledAt).HasColumnName("cancelled_at");
+            e.Property(x => x.ProctorProfileId).HasColumnName("giam_thi_id");
+            e.Property(x => x.Role).HasColumnName("vai_tro").HasConversion<string>().HasMaxLength(30);
+            e.Property(x => x.Status).HasColumnName("trang_thai").HasConversion<string>();
+            e.Property(x => x.AssignedAt).HasColumnName("ngay_phan_cong");
+            e.Property(x => x.CancelledAt).HasColumnName("ngay_huy");
             e.HasIndex(x => new { x.CaThiId, x.ProctorProfileId }).IsUnique();
             e.HasIndex(x => new { x.CaThiId, x.Role }).IsUnique();
             e.HasOne(x => x.CaThi).WithMany(x => x.ProctorAssignments)
