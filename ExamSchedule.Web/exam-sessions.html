@@ -26,6 +26,7 @@
                 <option value="Huy">Đã hủy</option>
             </select>
             <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnSchedule">⚙️ Xếp lịch tự động</button>
             <button class="btn btn-primary" id="btnAdd">➕ Thêm ca thi</button>
         </div>
 
@@ -125,8 +126,8 @@
                 <label>Thời gian bắt đầu
                     <input type="datetime-local" id="batDau" required>
                 </label>
-                <label>Thời gian kết thúc
-                    <input type="datetime-local" id="ketThuc" required>
+                <label>Thời lượng
+                    <input value="120 phút - thi trên máy" readonly>
                 </label>
                 <label>Sức chứa
                     <input type="number" id="sucChua" min="1" value="30" required>

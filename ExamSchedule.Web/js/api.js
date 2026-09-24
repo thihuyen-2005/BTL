@@ -1,4 +1,18 @@
-const API_BASE = "https://silver-space-acorn-7vrq66j5jx7qcr446-5000.app.github.dev/api";
+function getApiBase() {
+  const { hostname, protocol, port } = window.location;
+
+  if (hostname.endsWith(".app.github.dev")) {
+    return `${protocol}//${hostname.replace(/-\d+\.app\.github\.dev$/, "-5000.app.github.dev")}/api`;
+  }
+
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return `http://${hostname}:5000/api`;
+  }
+
+  return `${protocol}//${hostname}${port ? `:${port}` : ""}/api`;
+}
+
+const API_BASE = getApiBase();
 
 function getToken()    { return localStorage.getItem("accessToken"); }
 function getRefresh()  { return localStorage.getItem("refreshToken"); }
@@ -7,7 +21,7 @@ function clearTokens()  { localStorage.clear(); }
 
 async function apiFetch(path, options = {}) {
   const headers = {
-    "Content-Type": "application/json",
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers || {})
   };
   const token = getToken();

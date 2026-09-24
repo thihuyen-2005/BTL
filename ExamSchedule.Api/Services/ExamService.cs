@@ -35,7 +35,7 @@ public class ExamService
             .OrderByDescending(k => k.KyThiId)
             .Skip((page - 1) * limit).Take(limit)
             .Select(k => new KyThiResponseDto(
-                k.KyThiId, k.MaKyThi, k.TenKyThi, k.LoaiChungChi,
+                k.KyThiId, k.MaKyThi, $"Kỳ thi Năng lực số - {k.MaKyThi}", "NangLucSo",
                 k.ThoiGianBatDauDk, k.ThoiGianKetThucDk,
                 k.TrangThai.ToString(),
                 k.CaThis.Count))
@@ -52,7 +52,7 @@ public class ExamService
             ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
 
         return new KyThiResponseDto(
-            k.KyThiId, k.MaKyThi, k.TenKyThi, k.LoaiChungChi,
+            k.KyThiId, k.MaKyThi, TenKyThiChuan(k), "NangLucSo",
             k.ThoiGianBatDauDk, k.ThoiGianKetThucDk,
             k.TrangThai.ToString(), k.CaThis.Count);
     }
@@ -65,11 +65,14 @@ public class ExamService
         if (await _db.KyThis.AnyAsync(k => k.MaKyThi == dto.MaKyThi))
             throw new BusinessException("Mã kỳ thi đã tồn tại.");
 
+        if (!string.Equals(dto.LoaiChungChi, "NangLucSo", StringComparison.OrdinalIgnoreCase))
+            throw new BusinessException("Hệ thống chỉ hỗ trợ kỳ thi Năng lực số.");
+
         var kt = new KyThi
         {
             MaKyThi = dto.MaKyThi,
             TenKyThi = dto.TenKyThi,
-            LoaiChungChi = dto.LoaiChungChi,
+            LoaiChungChi = "NangLucSo",
             ThoiGianBatDauDk = dto.ThoiGianBatDauDk,
             ThoiGianKetThucDk = dto.ThoiGianKetThucDk,
             GhiChu = dto.GhiChu,
@@ -80,10 +83,12 @@ public class ExamService
 
         await _audit.LogAsync(userId, "CREATE", "KY_THI", kt.KyThiId, null, kt, ip);
 
-        return new KyThiResponseDto(kt.KyThiId, kt.MaKyThi, kt.TenKyThi,
-            kt.LoaiChungChi, kt.ThoiGianBatDauDk, kt.ThoiGianKetThucDk,
+        return new KyThiResponseDto(kt.KyThiId, kt.MaKyThi, TenKyThiChuan(kt),
+            "NangLucSo", kt.ThoiGianBatDauDk, kt.ThoiGianKetThucDk,
             kt.TrangThai.ToString(), 0);
     }
+
+    private static string TenKyThiChuan(KyThi kyThi) => $"Kỳ thi Năng lực số - {kyThi.MaKyThi}";
 
     public async Task UpdateAsync(int id, KyThiUpdateDto dto, int userId, string ip)
     {

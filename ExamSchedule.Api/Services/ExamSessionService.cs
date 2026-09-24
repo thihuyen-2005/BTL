@@ -42,6 +42,10 @@ public class ExamSessionService
 
         var kt = await _db.KyThis.FindAsync(dto.KyThiId)
             ?? throw new NotFoundException("Kỳ thi không tồn tại.");
+        var room = await _db.PhongThis.FindAsync(dto.PhongThiId)
+            ?? throw new NotFoundException("Phòng thi không tồn tại.");
+        if (dto.SucChua > room.SucChua)
+            throw new BusinessException($"Sức chứa ca thi không được vượt quá sức chứa phòng ({room.SucChua}).");
 
         if (kt.TrangThai is TrangThaiKyThi.KetThuc or TrangThaiKyThi.Huy)
             throw new BusinessException("Kỳ thi đã kết thúc/hủy, không thể tạo ca thi.");
@@ -81,6 +85,10 @@ public class ExamSessionService
             throw new BusinessException("Ca thi đã đóng/hủy, không thể sửa.");
 
         ValidateTime(dto.ThoiGianBatDau, dto.ThoiGianKetThuc, dto.SucChua);
+        var room = await _db.PhongThis.FindAsync(dto.PhongThiId)
+            ?? throw new NotFoundException("Phòng thi không tồn tại.");
+        if (dto.SucChua > room.SucChua)
+            throw new BusinessException($"Sức chứa ca thi không được vượt quá sức chứa phòng ({room.SucChua}).");
         await EnsureNoConflictAsync(dto.PhongThiId,
             dto.ThoiGianBatDau, dto.ThoiGianKetThuc, ignoreId: id);
 
@@ -151,8 +159,8 @@ public class ExamSessionService
 
     private static void ValidateTime(DateTime start, DateTime end, int sucChua)
     {
-        if (end <= start)
-            throw new BusinessException("Thời gian kết thúc phải sau thời gian bắt đầu.");
+        if (end != start.AddMinutes(120))
+            throw new BusinessException("Mỗi ca thi Năng lực số trên máy phải kéo dài đúng 120 phút.");
         if (sucChua <= 0)
             throw new BusinessException("Sức chứa phải lớn hơn 0.");
     }

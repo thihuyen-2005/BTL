@@ -11,6 +11,13 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var enableHttpsRedirection = builder.Configuration.GetValue(
+    "HttpsRedirection:Enabled",
+    !builder.Environment.IsDevelopment());
+
+if (builder.Environment.IsDevelopment())
+    builder.WebHost.UseUrls("http://0.0.0.0:5000");
+
 // ===== Kết nối MySQL =====
 var connStr = builder.Configuration.GetConnectionString("Default")!;
 if (!connStr.Contains("CharSet=", StringComparison.OrdinalIgnoreCase))
@@ -29,6 +36,8 @@ builder.Services.AddScoped<ExamSessionService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ExamStatusUpdater>();
 builder.Services.AddScoped<ProctorService>();
+builder.Services.AddScoped<ThiSinhService>();
+builder.Services.AddScoped<XepLichService>();
 
 // ===== Cấu hình JWT =====
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -129,6 +138,49 @@ using (var scope = app.Services.CreateScope())
             VALUES ('20260923133609_AddProctorManagementGenerated', '8.0.0');");
     }
     db.Database.Migrate();
+    var existingTables = db.Database.SqlQueryRaw<string>(
+        "SELECT table_name AS `Value` FROM information_schema.tables WHERE table_schema = DATABASE()")
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    foreach (var (oldName, newName) in new[]
+    {
+        ("app_users", "nguoi_dung"),
+        ("roles", "vai_tro"),
+        ("user_roles", "nguoi_dung_vai_tro"),
+        ("audit_log", "nhat_ky"),
+        ("proctor_profiles", "giam_thi_cu"),
+        ("proctor_assignments", "phan_cong_giam_thi_cu")
+    })
+    {
+        var oldExists = existingTables.Contains(oldName);
+        var newExists = existingTables.Contains(newName);
+        if (oldExists && !newExists)
+        {
+            var renameSql = (oldName, newName) switch
+            {
+                ("app_users", "nguoi_dung") => "RENAME TABLE `app_users` TO `nguoi_dung`;",
+                ("roles", "vai_tro") => "RENAME TABLE `roles` TO `vai_tro`;",
+                ("user_roles", "nguoi_dung_vai_tro") => "RENAME TABLE `user_roles` TO `nguoi_dung_vai_tro`;",
+                ("audit_log", "nhat_ky") => "RENAME TABLE `audit_log` TO `nhat_ky`;",
+                ("proctor_profiles", "giam_thi_cu") => "RENAME TABLE `proctor_profiles` TO `giam_thi_cu`;",
+                ("proctor_assignments", "phan_cong_giam_thi_cu") => "RENAME TABLE `proctor_assignments` TO `phan_cong_giam_thi_cu`;",
+                _ => throw new InvalidOperationException("Tên bảng rename không hợp lệ.")
+            };
+            db.Database.ExecuteSqlRaw(renameSql);
+        }
+    }
+    db.Database.ExecuteSqlRaw(@"
+        UPDATE `ky_thi`
+        SET `ma_ky_thi` = CASE
+            WHEN `ma_ky_thi` LIKE 'MOS%' THEN CONCAT('NLS-', REPLACE(`ma_ky_thi`, 'MOS - ', ''))
+            WHEN `ma_ky_thi` LIKE 'ICDL%' THEN CONCAT('NLS-', REPLACE(REPLACE(`ma_ky_thi`, 'ICDL-', ''), 'ICDL - ', ''))
+            ELSE `ma_ky_thi`
+        END;
+        UPDATE `ky_thi`
+        SET `loai_chung_chi` = 'NangLucSo',
+            `ten_ky_thi` = CONCAT('Kỳ thi Năng lực số - ', `ma_ky_thi`);
+        UPDATE `ca_thi`
+        SET `thoi_gian_ket_thuc` = DATE_ADD(`thoi_gian_bat_dau`, INTERVAL 120 MINUTE),
+            `hinh_thuc_thi` = 'TrenMay';");
     var requiredColumnExists = db.Database.SqlQueryRaw<int>(@"
         SELECT COUNT(*) AS `Value` FROM information_schema.columns
         WHERE table_schema = DATABASE()
@@ -245,7 +297,8 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+if (enableHttpsRedirection)
+    app.UseHttpsRedirection();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();

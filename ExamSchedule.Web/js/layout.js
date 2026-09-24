@@ -6,6 +6,8 @@ const MENU = [
     { section: "Quản lý" },
     { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams",
       roles: ["Admin", "CBKT", "QuanLy"] },
+        { href: "thisinh.html",         icon: "🎓", label: "Thí sinh",         active: "thisinh",
+            roles: ["Admin", "CBKT", "QuanLy"] },
     { href: "proctors.html",        icon: "👤", label: "Giám thị",         active: "proctors",
       roles: ["Admin", "CBKT"] },
     { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có",

@@ -11,6 +11,17 @@ const tbody = document.querySelector("#tblSessions tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formSession");
 
+document.getElementById("btnSchedule").onclick = async () => {
+    if (!confirm("Xếp tự động các thí sinh chưa có ca thi? Lịch đã xếp sẽ được giữ nguyên.")) return;
+    try {
+        const result = await apiFetch(`/thisinh/ky-thi/${kyThiId}/xep-lich`, { method: "POST" });
+        toast(`Đã xếp ${result.daXep}/${result.tongSoDangKy} thí sinh`, "success");
+        loadSessions();
+    } catch (e) {
+        toast("Không thể xếp lịch: " + e.message, "error");
+    }
+};
+
 async function loadSessions() {
     try {
         const status = document.getElementById("filterStatus").value;
@@ -88,7 +99,7 @@ form.onsubmit = async (e) => {
         kyThiId: kyThiId,
         phongThiId: parseInt(document.getElementById("phongThi").value),
         thoiGianBatDau: document.getElementById("batDau").value + ":00",
-        thoiGianKetThuc: document.getElementById("ketThuc").value + ":00",
+        thoiGianKetThuc: new Date(new Date(document.getElementById("batDau").value).getTime() + 120 * 60000).toISOString(),
         sucChua: parseInt(document.getElementById("sucChua").value),
         ghiChu: document.getElementById("ghiChu").value
     };

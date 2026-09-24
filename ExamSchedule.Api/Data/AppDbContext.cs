@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ProctorProfile> ProctorProfiles => Set<ProctorProfile>();
     public DbSet<ProctorAssignment> ProctorAssignments => Set<ProctorAssignment>();
+    public DbSet<ThiSinh> ThiSinhs => Set<ThiSinh>();
+    public DbSet<DangKyThi> DangKyThis => Set<DangKyThi>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -24,7 +26,7 @@ public class AppDbContext : DbContext
         // ===== AppUser =====
         mb.Entity<AppUser>(e =>
         {
-            e.ToTable("app_users");
+            e.ToTable("nguoi_dung");
             e.HasKey(x => x.UserId);
             e.Property(x => x.UserId).HasColumnName("user_id");
             e.Property(x => x.Username).HasColumnName("username").HasMaxLength(50);
@@ -41,7 +43,7 @@ public class AppDbContext : DbContext
         // ===== Role =====
         mb.Entity<Role>(e =>
         {
-            e.ToTable("roles");
+            e.ToTable("vai_tro");
             e.HasKey(x => x.RoleId);
             e.Property(x => x.RoleId).HasColumnName("role_id");
             e.Property(x => x.RoleName).HasColumnName("role_name").HasMaxLength(50);
@@ -51,7 +53,7 @@ public class AppDbContext : DbContext
         // ===== UserRole =====
         mb.Entity<UserRole>(e =>
         {
-            e.ToTable("user_roles");
+            e.ToTable("nguoi_dung_vai_tro");
             e.HasKey(x => new { x.UserId, x.RoleId });
             e.Property(x => x.UserId).HasColumnName("user_id");
             e.Property(x => x.RoleId).HasColumnName("role_id");
@@ -122,11 +124,54 @@ public class AppDbContext : DbContext
             e.Property(x => x.NgayTao).HasColumnName("ngay_tao");
             e.Property(x => x.NgayCapNhat).HasColumnName("ngay_cap_nhat");
             e.Property(x => x.RequiredProctorCount).HasColumnName("required_proctor_count").HasDefaultValue(3);
+            e.Property(x => x.HinhThucThi).HasColumnName("hinh_thuc_thi").HasMaxLength(30).HasDefaultValue("TrenMay");
 
             e.HasOne(x => x.KyThi).WithMany(k => k.CaThis)
              .HasForeignKey(x => x.KyThiId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.PhongThi).WithMany()
              .HasForeignKey(x => x.PhongThiId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        mb.Entity<ThiSinh>(e =>
+        {
+            e.ToTable("thisinh");
+            e.HasKey(x => x.ThiSinhId);
+            e.Property(x => x.ThiSinhId).HasColumnName("thisinh_id");
+            e.Property(x => x.MaThiSinh).HasColumnName("ma_thisinh").HasMaxLength(50);
+            e.Property(x => x.HoTen).HasColumnName("ho_ten").HasMaxLength(150);
+            e.Property(x => x.NgaySinh).HasColumnName("ngay_sinh");
+            e.Property(x => x.GioiTinh).HasColumnName("gioi_tinh").HasMaxLength(20);
+            e.Property(x => x.DanToc).HasColumnName("dan_toc").HasMaxLength(50);
+            e.Property(x => x.NoiSinh).HasColumnName("noi_sinh").HasMaxLength(150);
+            e.Property(x => x.QuocTich).HasColumnName("quoc_tich").HasMaxLength(50);
+            e.Property(x => x.SoCccdHoChieu).HasColumnName("so_cccd_ho_chieu").HasMaxLength(30);
+            e.Property(x => x.SoDienThoai).HasColumnName("so_dien_thoai").HasMaxLength(30);
+            e.Property(x => x.Lop).HasColumnName("lop").HasMaxLength(100);
+            e.Property(x => x.NganhHoc).HasColumnName("nganh_hoc").HasMaxLength(200);
+            e.Property(x => x.Khoa).HasColumnName("khoa").HasMaxLength(200);
+            e.Property(x => x.SoTien).HasColumnName("so_tien").HasPrecision(12, 2);
+            e.Property(x => x.EmailCaNhan).HasColumnName("email_ca_nhan").HasMaxLength(150);
+            e.Property(x => x.NgayTao).HasColumnName("ngay_tao");
+            e.HasIndex(x => x.MaThiSinh).IsUnique();
+            e.HasIndex(x => x.SoCccdHoChieu).IsUnique();
+        });
+
+        mb.Entity<DangKyThi>(e =>
+        {
+            e.ToTable("dangkythi");
+            e.HasKey(x => x.DangKyThiId);
+            e.Property(x => x.DangKyThiId).HasColumnName("dangkythi_id");
+            e.Property(x => x.ThiSinhId).HasColumnName("thisinh_id");
+            e.Property(x => x.KyThiId).HasColumnName("ky_thi_id");
+            e.Property(x => x.CaThiId).HasColumnName("ca_thi_id");
+            e.Property(x => x.TrangThai).HasColumnName("trang_thai").HasConversion<string>().HasMaxLength(30);
+            e.Property(x => x.LyDoChuaXep).HasColumnName("ly_do_chua_xep").HasMaxLength(500);
+            e.Property(x => x.NgayDangKy).HasColumnName("ngay_dang_ky");
+            e.Property(x => x.NgayCapNhat).HasColumnName("ngay_cap_nhat");
+            e.HasIndex(x => new { x.ThiSinhId, x.KyThiId }).IsUnique();
+            e.HasOne(x => x.ThiSinh).WithMany(x => x.DangKyThis).HasForeignKey(x => x.ThiSinhId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.KyThi).WithMany().HasForeignKey(x => x.KyThiId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.CaThi).WithMany(x => x.DangKyThis).HasForeignKey(x => x.CaThiId).OnDelete(DeleteBehavior.SetNull);
         });
 
         mb.Entity<ProctorAssignment>(e =>
@@ -151,7 +196,7 @@ public class AppDbContext : DbContext
         // ===== AuditLog =====
         mb.Entity<AuditLog>(e =>
         {
-            e.ToTable("audit_log");
+            e.ToTable("nhat_ky");
             e.HasKey(x => x.AuditId);
             e.Property(x => x.AuditId).HasColumnName("audit_id");
             e.Property(x => x.UserId).HasColumnName("user_id");

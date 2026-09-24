@@ -37,7 +37,7 @@
                         <th style="width:60px;">ID</th>
                         <th>Mã</th>
                         <th>Tên kỳ thi</th>
-                        <th>Loại CC</th>
+                        <th>Loại kỳ thi</th>
                         <th>Bắt đầu ĐK</th>
                         <th>Kết thúc ĐK</th>
                         <th>Trạng thái</th>
@@ -56,17 +56,13 @@
             <form id="formExam">
                 <input type="hidden" id="kyThiId">
                 <label>Mã kỳ thi
-                    <input id="maKyThi" required maxlength="50" placeholder="VD: ICDL-09-2026">
+                    <input id="maKyThi" required maxlength="50" placeholder="VD: NLS-09-2026">
                 </label>
                 <label>Tên kỳ thi
-                    <input id="tenKyThi" required maxlength="200" placeholder="VD: ICDL đợt 9/2026">
+                    <input id="tenKyThi" required maxlength="200" placeholder="VD: Kỳ thi Năng lực số đợt 9/2026">
                 </label>
-                <label>Loại chứng chỉ
-                    <select id="loaiChungChi" required>
-                        <option value="">-- Chọn loại --</option>
-                        <option value="ICDL">ICDL — Tin học văn phòng quốc tế</option>
-                        <option value="MOS">MOS — Microsoft Office Specialist</option>
-                    </select>
+                <label>Loại kỳ thi
+                    <input id="loaiChungChi" value="NangLucSo" readonly>
                 </label>
                 <label>Ngày bắt đầu đăng ký
                     <input type="date" id="batDauDk" required>

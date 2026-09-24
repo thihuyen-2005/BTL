@@ -22,5 +22,7 @@ public class CaThi
     public DateTime NgayTao { get; set; } = DateTime.UtcNow;
     public DateTime? NgayCapNhat { get; set; }
     public int RequiredProctorCount { get; set; } = 3;
+    public string HinhThucThi { get; set; } = "TrenMay";
     public ICollection<ProctorAssignment> ProctorAssignments { get; set; } = new List<ProctorAssignment>();
+    public ICollection<DangKyThi> DangKyThis { get; set; } = new List<DangKyThi>();
 }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Thí sinh</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="page-header">
+            <div>
+                <div class="title">Danh sách Thí sinh</div>
+                <div class="subtitle">Quản lý hồ sơ và tình trạng lệ phí của thí sinh</div>
+            </div>
+        </div>
+        <div class="toolbar">
+            <input id="search" placeholder="🔍 Mã hoặc họ tên">
+            <input id="filterLop" placeholder="Lọc theo lớp">
+            <input id="filterNganh" placeholder="Lọc theo ngành">
+            <input id="filterKhoa" placeholder="Lọc theo khoa">
+            <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnManual">➕ Thêm thí sinh</button>
+            <button class="btn btn-primary" id="btnImport">📊 Nhập file Excel</button>
+        </div>
+        <div class="card">
+            <table id="tblCandidates">
+                <thead><tr><th>Mã thí sinh</th><th>Họ và tên</th><th>Ngày sinh</th><th>Lớp</th><th>Ngành học</th><th>Số tiền</th><th>Email</th><th>Thao tác</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="manualModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="manualTitle">Thêm thí sinh</h2>
+            <form id="candidateForm">
+                <input id="candidateId" type="hidden">
+                <label>Mã thí sinh <input id="maThiSinh" required placeholder="TS001"></label>
+                <label>Họ và tên <input id="hoTen" required></label>
+                <label>Ngày sinh <input id="ngaySinh" type="date"></label>
+                <label>Giới tính <input id="gioiTinh"></label>
+                <label>Số CCCD/Hộ chiếu <input id="soCccdHoChieu"></label>
+                <label>Số điện thoại <input id="soDienThoai"></label>
+                <label>Lớp <input id="lop"></label>
+                <label>Ngành học <input id="nganhHoc"></label>
+                <label>Khoa <input id="khoa"></label>
+                <label>Tình trạng học phí
+                    <select id="soTien" required>
+                        <option value="800000">Đã nộp 800.000 đồng</option>
+                        <option value="">Chưa nộp</option>
+                    </select>
+                </label>
+                <label>Email cá nhân <input id="emailCaNhan" type="email"></label>
+                <div class="actions">
+                    <button type="button" id="btnCancelManual">Hủy</button>
+                    <button type="submit">Lưu thí sinh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="importModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Nhập danh sách từ Excel</h2>
+            <p>Chọn file .xlsx có dòng tiêu đề. Ô “Số tiền” ghi 800.000 sẽ được phép xếp ca; “Chưa nộp” sẽ không được xếp.</p>
+            <input id="excelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+            <div class="actions">
+                <button type="button" id="btnCancelImport">Hủy</button>
+                <button type="button" id="btnSaveImport">Nhập và lưu</button>
+            </div>
+        </div>
+    </div>
+    <script src="js/api.js?v=20260924-2"></script>
+    <script src="js/layout.js?v=20260924-2"></script>
+    <script src="js/thisinh.js?v=20260924-2"></script>
+</body>
+</html>
