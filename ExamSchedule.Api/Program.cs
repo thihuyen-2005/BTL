@@ -122,21 +122,6 @@ using (var scope = app.Services.CreateScope())
             SELECT 1 FROM information_schema.tables
             WHERE table_schema = DATABASE() AND table_name = 'app_users'
         );");
-    var legacyProctorSchemaExists = db.Database.SqlQueryRaw<int>(@"
-        SELECT COUNT(*) AS `Value` FROM information_schema.tables
-        WHERE table_schema = DATABASE() AND table_name = 'giam_thi'")
-        .Single() > 0;
-    if (legacyProctorSchemaExists)
-    {
-        db.Database.ExecuteSqlRaw(@"
-            DELETE FROM `__EFMigrationsHistory`
-            WHERE `MigrationId` IN (
-                '20260923120000_AddProctorManagement',
-                '20260923133609_AddProctorManagement'
-            );
-            INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-            VALUES ('20260923133609_AddProctorManagementGenerated', '8.0.0');");
-    }
     db.Database.Migrate();
     var existingTables = db.Database.SqlQueryRaw<string>(
         "SELECT table_name AS `Value` FROM information_schema.tables WHERE table_schema = DATABASE()")
@@ -146,9 +131,7 @@ using (var scope = app.Services.CreateScope())
         ("app_users", "nguoi_dung"),
         ("roles", "vai_tro"),
         ("user_roles", "nguoi_dung_vai_tro"),
-        ("audit_log", "nhat_ky"),
-        ("proctor_profiles", "giam_thi_cu"),
-        ("proctor_assignments", "phan_cong_giam_thi_cu")
+        ("audit_log", "nhat_ky")
     })
     {
         var oldExists = existingTables.Contains(oldName);
@@ -161,8 +144,6 @@ using (var scope = app.Services.CreateScope())
                 ("roles", "vai_tro") => "RENAME TABLE `roles` TO `vai_tro`;",
                 ("user_roles", "nguoi_dung_vai_tro") => "RENAME TABLE `user_roles` TO `nguoi_dung_vai_tro`;",
                 ("audit_log", "nhat_ky") => "RENAME TABLE `audit_log` TO `nhat_ky`;",
-                ("proctor_profiles", "giam_thi_cu") => "RENAME TABLE `proctor_profiles` TO `giam_thi_cu`;",
-                ("proctor_assignments", "phan_cong_giam_thi_cu") => "RENAME TABLE `proctor_assignments` TO `phan_cong_giam_thi_cu`;",
                 _ => throw new InvalidOperationException("Tên bảng rename không hợp lệ.")
             };
             db.Database.ExecuteSqlRaw(renameSql);
@@ -270,24 +251,38 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($">>> Created: {s.Username,-10} | {s.Password,-14} | {s.Role}");
     }
 
-    // Seed hồ sơ giám thị từ các quản lý hiện có, nhưng không phụ thuộc vào bảng app_users.
-    var proctorUsers = db.Users
-        .Include(u => u.UserRoles)
-        .ThenInclude(ur => ur.Role)
-        .Where(u => u.IsActive && u.UserRoles.Any(ur =>
-            new[] { "Admin", "CBKT", "QuanLy" }.Contains(ur.Role.RoleName)))
-        .ToList();
-    foreach (var user in proctorUsers)
+    // Seed 15 hồ sơ giám thị mới với thông tin cụ thể, đồng bộ với bảng giam_thi.
+    var proctorSeed = new[]
     {
-        if (db.ProctorProfiles.Any(p => p.StaffCode == $"GT-{user.UserId:000}"))
+        new { StaffCode = "GT-001", FullName = "Nguyễn Văn Hoàng", Email = "nguyenvanhoang@khaothi.edu.vn", Phone = "0903123456", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-002", FullName = "Trần Thị Lan", Email = "tranthilan@khaothi.edu.vn", Phone = "0903456789", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-003", FullName = "Lê Minh Tuấn", Email = "leminhtuan@khaothi.edu.vn", Phone = "0903789123", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-004", FullName = "Phạm Thị Hương", Email = "phamthihuong@khaothi.edu.vn", Phone = "0903123987", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-005", FullName = "Hoàng Minh Quân", Email = "hoangminhquan@khaothi.edu.vn", Phone = "0903876543", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-006", FullName = "Đỗ Thị Nhàn", Email = "dothinhan@khaothi.edu.vn", Phone = "0903567891", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-007", FullName = "Nguyễn Thị Mai", Email = "nguyenthimai@khaothi.edu.vn", Phone = "0903234567", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-008", FullName = "Trần Quang Huy", Email = "tranquanghuy@khaothi.edu.vn", Phone = "0903345678", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-009", FullName = "Võ Thị Thúy", Email = "vothithuy@khaothi.edu.vn", Phone = "0903987654", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-010", FullName = "Bùi Đức Anh", Email = "buiducanh@khaothi.edu.vn", Phone = "0903890123", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-011", FullName = "Nguyễn Thành Tuấn", Email = "nguyenthanhtuan@khaothi.edu.vn", Phone = "0903123458", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-012", FullName = "Lê Thị Huyền", Email = "lethihuyen@khaothi.edu.vn", Phone = "0903765432", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-013", FullName = "Phạm Văn Dũng", Email = "phamvandung@khaothi.edu.vn", Phone = "0903654321", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-014", FullName = "Trần Thị Uyên", Email = "tranthuyen@khaothi.edu.vn", Phone = "0903543210", Department = "Phòng Khảo thí" },
+        new { StaffCode = "GT-015", FullName = "Hoàng Văn Sơn", Email = "hoangvanson@khaothi.edu.vn", Phone = "0903987650", Department = "Phòng Khảo thí" }
+    };
+
+    foreach (var proctor in proctorSeed)
+    {
+        if (db.ProctorProfiles.Any(p => p.StaffCode == proctor.StaffCode))
             continue;
 
         db.ProctorProfiles.Add(new ProctorProfile
         {
-            StaffCode = $"GT-{user.UserId:000}",
-            FullName = user.FullName,
-            Email = user.Email,
-            Department = "Phòng Khảo thí",
+            StaffCode = proctor.StaffCode,
+            FullName = proctor.FullName,
+            Email = proctor.Email,
+            Phone = proctor.Phone,
+            Department = proctor.Department,
             IsActive = true
         });
     }

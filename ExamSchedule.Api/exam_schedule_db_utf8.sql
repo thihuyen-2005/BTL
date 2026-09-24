@@ -284,21 +284,21 @@ CREATE TABLE `giam_thi` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `giam_thi` (`giam_thi_id`, `ma_giam_thi`, `ho_ten`, `email`, `so_dien_thoai`, `don_vi`, `trang_thai`, `ngay_tao`) VALUES
-  (1,'GT-001','Nguyễn Văn An','nguyenvanan@gmail.com','0902001001','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (2,'GT-002','Trần Thị Bình','tranthibinh@gmail.com','0902001002','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (3,'GT-003','Lê Hoàng Cường','lehoangcuong@gmail.com','0902001003','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (4,'GT-004','Phạm Thị Duyên','phamthiduyen@gmail.com','0902001004','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (5,'GT-005','Hoàng Minh Đức','hoangminhduc@gmail.com','0902001005','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (6,'GT-006','Đỗ Thị Hạnh','dothihanh@gmail.com','0902001006','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (7,'GT-007','Trịnh Văn Hòa','trinhvanhoa@gmail.com','0902001007','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (8,'GT-008','Bùi Thị Lan','buithilan@gmail.com','0902001008','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (9,'GT-009','Ngô Đức Long','ngoduclong@gmail.com','0902001009','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (10,'GT-010','Vũ Thị Mai','vuthimai@gmail.com','0902001010','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (11,'GT-011','Cao Văn Nam','caovannam@gmail.com','0902001011','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (12,'GT-012','Đặng Thị Oanh','dangthioanh@gmail.com','0902001012','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (13,'GT-013','Lý Minh Phúc','lyminhphuc@gmail.com','0902001013','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (14,'GT-014','Tạ Thị Quỳnh','tathiquynh@gmail.com','0902001014','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
-  (15,'GT-015','Huỳnh Văn Sơn','huynhvanson@gmail.com','0902001015','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000');
+  (1,'GT-001','Nguyễn Văn Hoàng','nguyenvanhoang@khaothi.edu.vn','0903123456','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (2,'GT-002','Trần Thị Lan','tranthilan@khaothi.edu.vn','0903456789','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (3,'GT-003','Lê Minh Tuấn','leminhtuan@khaothi.edu.vn','0903789123','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (4,'GT-004','Phạm Thị Hương','phamthihuong@khaothi.edu.vn','0903123987','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (5,'GT-005','Hoàng Minh Quân','hoangminhquan@khaothi.edu.vn','0903876543','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (6,'GT-006','Đỗ Thị Nhàn','dothinhan@khaothi.edu.vn','0903567891','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (7,'GT-007','Nguyễn Thị Mai','nguyenthimai@khaothi.edu.vn','0903234567','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (8,'GT-008','Trần Quang Huy','tranquanghuy@khaothi.edu.vn','0903345678','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (9,'GT-009','Võ Thị Thúy','vothithuy@khaothi.edu.vn','0903987654','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (10,'GT-010','Bùi Đức Anh','buiducanh@khaothi.edu.vn','0903890123','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (11,'GT-011','Nguyễn Thành Tuấn','nguyenthanhtuan@khaothi.edu.vn','0903123458','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (12,'GT-012','Lê Thị Huyền','lethihuyen@khaothi.edu.vn','0903765432','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (13,'GT-013','Phạm Văn Dũng','phamvandung@khaothi.edu.vn','0903654321','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (14,'GT-014','Trần Thị Uyên','tranthuyen@khaothi.edu.vn','0903543210','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000'),
+  (15,'GT-015','Hoàng Văn Sơn','hoangvanson@khaothi.edu.vn','0903987650','Phòng Khảo thí',1,'2026-09-24 00:00:00.000000');
 
 CREATE TABLE `giam_thi_phan_cong` (
   `phan_cong_id` int NOT NULL AUTO_INCREMENT,

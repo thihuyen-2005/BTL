@@ -27,6 +27,14 @@ public record CreateProctorProfileRequest(
     string? FullName = null,
     string? Email = null);
 
+public record UpdateProctorProfileRequest(
+    string StaffCode,
+    string? Department,
+    string? Phone,
+    string? FullName = null,
+    string? Email = null,
+    bool? IsActive = null);
+
 public record ExamSessionProctorSummaryDto(
     int CaThiId, string MaKyThi, string TenKyThi, DateTime Start, DateTime End,
     string MaPhong, string TenPhong, TrangThaiCaThi SessionStatus,

@@ -33,6 +33,11 @@ public class ProctorsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateProctorProfileRequest request)
         => Ok(await _service.CreateProfileAsync(request, CurrentUserId, ClientIp));
 
+    [HttpPut("{proctorProfileId:int}")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> Update(int proctorProfileId, [FromBody] UpdateProctorProfileRequest request)
+        => Ok(await _service.UpdateProfileAsync(proctorProfileId, request, CurrentUserId, ClientIp));
+
     [HttpGet("{proctorProfileId:int}/schedule")]
     public async Task<IActionResult> GetSchedule(int proctorProfileId)
     {

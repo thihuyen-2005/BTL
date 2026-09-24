@@ -19,13 +19,21 @@
             <input id="search" placeholder="Tìm mã, họ tên, đơn vị">
             <select id="filterStatus">
                 <option value="">Tất cả trạng thái</option>
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Không hoạt động</option>
                 <option value="free">Đang rảnh</option>
                 <option value="busy">Đã có lịch</option>
             </select>
             <div class="spacer"></div>
+            <button class="btn btn-primary" id="btnAddProctor">＋ Thêm giám thị</button>
             <button class="btn btn-primary" id="btnRefresh">↻ Làm mới</button>
+        </div>
+
+        <div class="toolbar" style="margin-top: 12px; margin-bottom: 16px;">
+            <select id="examSelect">
+                <option value="">Chọn kỳ thi</option>
+            </select>
+            <select id="sessionSelect">
+                <option value="">Chọn ca thi</option>
+            </select>
         </div>
 
         <section id="assignmentPanel" class="card hidden" style="margin-bottom:18px;">
@@ -57,6 +65,7 @@
                         <th>Họ tên</th>
                         <th>Đơn vị</th>
                         <th>Email</th>
+                        <th>Số điện thoại</th>
                         <th>Trạng thái</th>
                         <th>Số ca</th>
                         <th>Hành động</th>
@@ -72,6 +81,40 @@
             <h2 id="scheduleTitle">Lịch coi thi</h2>
             <div id="scheduleBody"></div>
             <div class="actions"><button type="button" id="closeSchedule">Đóng</button></div>
+        </div>
+    </div>
+
+    <div id="proctorModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="proctorModalTitle">Thêm giám thị</h2>
+            <form id="proctorForm">
+                <input type="hidden" id="proctorId">
+                <label>Mã giám thị
+                    <input id="proctorStaffCode" required maxlength="50" placeholder="VD: GT-001">
+                </label>
+                <label>Họ tên
+                    <input id="proctorFullName" required maxlength="100" placeholder="VD: Nguyễn Văn A">
+                </label>
+                <label>Email
+                    <input type="email" id="proctorEmail" maxlength="100" placeholder="VD: name@domain.com">
+                </label>
+                <label>Số điện thoại
+                    <input id="proctorPhone" maxlength="20" placeholder="VD: 0903...">
+                </label>
+                <label>Đơn vị
+                    <input id="proctorDepartment" maxlength="150" placeholder="VD: Phòng Khảo thí">
+                </label>
+                <label>Trạng thái
+                    <select id="proctorIsActive">
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Không hoạt động</option>
+                    </select>
+                </label>
+                <div class="actions">
+                    <button type="button" id="closeProctorModal">Hủy</button>
+                    <button type="submit" id="saveProctorBtn">Lưu</button>
+                </div>
+            </form>
         </div>
     </div>
 

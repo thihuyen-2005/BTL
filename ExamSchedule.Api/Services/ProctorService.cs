@@ -284,6 +284,56 @@ public class ProctorService
             profile.Phone, profile.IsActive, 0);
     }
 
+    public async Task<ProctorListItemDto> UpdateProfileAsync(
+        int profileId, UpdateProctorProfileRequest request, int actorId, string ip)
+    {
+        var profile = await _db.ProctorProfiles
+            .Include(p => p.Assignments)
+            .FirstOrDefaultAsync(p => p.ProctorProfileId == profileId)
+            ?? throw new NotFoundException("Không tìm thấy giám thị.");
+
+        var staffCode = request.StaffCode?.Trim();
+        if (string.IsNullOrWhiteSpace(staffCode))
+            throw new BusinessException("Mã giám thị không được trống.");
+
+        if (!string.Equals(profile.StaffCode, staffCode, StringComparison.Ordinal)
+            && await _db.ProctorProfiles.AnyAsync(p => p.ProctorProfileId != profileId && p.StaffCode == staffCode))
+            throw new BusinessException("Mã giám thị đã tồn tại.");
+
+        var old = new ProctorListItemDto(
+            profile.ProctorProfileId,
+            profile.StaffCode,
+            profile.FullName,
+            profile.Department,
+            profile.Email,
+            profile.Phone,
+            profile.IsActive,
+            profile.Assignments.Count(a => a.Status == ProctorAssignmentStatus.Da_phan_cong));
+
+        profile.StaffCode = staffCode;
+        profile.FullName = !string.IsNullOrWhiteSpace(request.FullName) ? request.FullName.Trim() : staffCode;
+        profile.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        profile.Department = request.Department?.Trim();
+        profile.Phone = request.Phone?.Trim();
+        if (request.IsActive.HasValue)
+            profile.IsActive = request.IsActive.Value;
+        profile.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync(actorId, "UPDATE_PROCTOR", "PROCTOR_PROFILE",
+            profile.ProctorProfileId, old, profile, ip);
+
+        return new ProctorListItemDto(
+            profile.ProctorProfileId,
+            profile.StaffCode,
+            profile.FullName,
+            profile.Department,
+            profile.Email,
+            profile.Phone,
+            profile.IsActive,
+            profile.Assignments.Count(a => a.Status == ProctorAssignmentStatus.Da_phan_cong));
+    }
+
     private async Task<CaThi> GetAssignableSessionAsync(int caThiId)
     {
         var session = await _db.CaThis.FirstOrDefaultAsync(c => c.CaThiId == caThiId)
