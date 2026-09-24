@@ -1,7 +1,3 @@
-// ============================================================
-// Layout: render sidebar + topbar dùng chung
-// ============================================================
-
 const MENU = [
     { section: "Tổng quan" },
     { href: "dashboard.html",       icon: "🏠", label: "Trang chủ",       active: "dashboard",
@@ -10,9 +6,7 @@ const MENU = [
     { section: "Quản lý" },
     { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams",
       roles: ["Admin", "CBKT", "QuanLy"] },
-    { href: "exams.html",            icon: "🕐", label: "Ca thi",           active: "exam-sessions",
-      roles: ["Admin", "CBKT", "QuanLy"] },
-        { href: "proctors.html",        icon: "👤", label: "Giám thị",         active: "proctors",
+    { href: "proctors.html",        icon: "👤", label: "Giám thị",         active: "proctors",
       roles: ["Admin", "CBKT"] },
     { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có",
       roles: ["Admin", "CBKT"] },
@@ -43,7 +37,7 @@ function renderLayout(pageTitle, pageSubtitle) {
     // ===== Sidebar — LỌC MENU THEO ROLE =====
     let navHTML = "";
     MENU.forEach(item => {
-        // ⚠️ THÊM DÒNG NÀY — ẩn menu nếu role không có quyền
+        // ⚠️ Ẩn menu nếu role không có quyền
         if (item.roles && !item.roles.includes(role)) return;
 
         if (item.section) {

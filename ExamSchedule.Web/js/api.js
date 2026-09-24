@@ -1,4 +1,4 @@
-const API_BASE = "https://friendly-cod-97j75prr475wh94xw-5000.app.github.dev/api";
+const API_BASE = "https://silver-space-acorn-7vrq66j5jx7qcr446-5000.app.github.dev/api";
 
 function getToken()    { return localStorage.getItem("accessToken"); }
 function getRefresh()  { return localStorage.getItem("refreshToken"); }
