@@ -1,7 +1,7 @@
 namespace ExamSchedule.Api.DTOs;
 
 public record KyThiCreateDto(
-    string MaKyThi, string TenKyThi, string LoaiChungChi,
+    string MaKyThi, string TenKyThi,
     DateTime ThoiGianBatDauDk, DateTime ThoiGianKetThucDk, string? GhiChu);
 
 public record KyThiUpdateDto(

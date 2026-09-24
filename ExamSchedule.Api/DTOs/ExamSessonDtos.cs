@@ -2,11 +2,11 @@ namespace ExamSchedule.Api.DTOs;
 
 public record CaThiCreateDto(
     int KyThiId, int PhongThiId,
-    DateTime ThoiGianBatDau, DateTime ThoiGianKetThuc,
+    DateTime ThoiGianBatDau,
     int SucChua, string? GhiChu);
 
 public record CaThiUpdateDto(
-    int PhongThiId, DateTime ThoiGianBatDau, DateTime ThoiGianKetThuc,
+    int PhongThiId, DateTime ThoiGianBatDau,
     int SucChua, string? GhiChu);
 
 public record CaThiResponseDto(

@@ -5,23 +5,22 @@ renderLayout("Quản lý Kỳ thi", "");
 const tbody = document.querySelector("#tblExams tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formExam");
+let searchTimer;
+let loadRequestId = 0;
 
 async function loadExams() {
+    const requestId = ++loadRequestId;
     try {
         const status = document.getElementById("filterStatus").value;
-        const kw = document.getElementById("search").value.trim().toLowerCase();
+        const keyword = document.getElementById("search").value.trim();
 
         const qs = new URLSearchParams({ page: 1, limit: 100 });
         if (status) qs.set("status", status);
+        if (keyword) qs.set("keyword", keyword);
 
         const data = await apiFetch("/exams?" + qs.toString());
-        let items = data.items || data;
-
-        if (kw) {
-            items = items.filter(x =>
-                x.maKyThi.toLowerCase().includes(kw) ||
-                x.tenKyThi.toLowerCase().includes(kw));
-        }
+        if (requestId !== loadRequestId) return;
+        const items = data.items || data;
 
         if (items.length === 0) {
             tbody.innerHTML = `
@@ -39,7 +38,6 @@ async function loadExams() {
                 <td>${k.kyThiId}</td>
                 <td><strong>${k.maKyThi}</strong></td>
                 <td>${k.tenKyThi}</td>
-                <td>${k.loaiChungChi}</td>
                 <td>${formatDate(k.thoiGianBatDauDk)}</td>
                 <td>${formatDate(k.thoiGianKetThucDk)}</td>
                 <td><span class="badge ${k.trangThai}">${trangThaiLabel(k.trangThai)}</span></td>
@@ -116,7 +114,6 @@ form.onsubmit = async (e) => {
     const body = {
         maKyThi: document.getElementById("maKyThi").value,
         tenKyThi: document.getElementById("tenKyThi").value,
-        loaiChungChi: document.getElementById("loaiChungChi").value,
         thoiGianBatDauDk: document.getElementById("batDauDk").value + "T00:00:00",
         thoiGianKetThucDk: document.getElementById("ketThucDk").value + "T00:00:00",
         ghiChu: document.getElementById("ghiChu").value
@@ -145,6 +142,9 @@ form.onsubmit = async (e) => {
 };
 
 document.getElementById("filterStatus").onchange = loadExams;
-document.getElementById("search").oninput = loadExams;
+document.getElementById("search").oninput = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadExams, 200);
+};
 
 loadExams();

@@ -20,8 +20,9 @@ public class ExamSessionsController : ControllerBase
     [HttpGet]
     [Authorize(Policy = "CanViewExam")]
     public async Task<IActionResult> GetByKyThi(
-        [FromQuery] int kyThiId, [FromQuery] string? trangThai = null)
-        => Ok(await _svc.GetByKyThiAsync(kyThiId, trangThai));
+        [FromQuery] int kyThiId, [FromQuery] string? trangThai = null,
+        [FromQuery] string? keyword = null)
+        => Ok(await _svc.GetByKyThiAsync(kyThiId, trangThai, keyword));
 
     [HttpPost]
     [Authorize(Policy = "CanManageExam")]

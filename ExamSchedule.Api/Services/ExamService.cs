@@ -20,10 +20,17 @@ public class ExamService
         _statusUpdater = statusUpdater;                             // ← THÊM 3
     }
 
-    public async Task<PagedResult<KyThiResponseDto>> GetPagedAsync(int page, int limit, string? status)
+    public async Task<PagedResult<KyThiResponseDto>> GetPagedAsync(
+        int page, int limit, string? status, string? keyword)
     {
         await _statusUpdater.UpdateAllAsync(); 
         var q = _db.KyThis.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            keyword = keyword.Trim();
+            q = q.Where(k => k.MaKyThi.Contains(keyword) || k.TenKyThi.Contains(keyword));
+        }
+
         if (!string.IsNullOrEmpty(status) && 
     Enum.TryParse<TrangThaiKyThi>(status, out var tt))
             {
@@ -65,8 +72,6 @@ public class ExamService
         if (await _db.KyThis.AnyAsync(k => k.MaKyThi == dto.MaKyThi))
             throw new BusinessException("Mã kỳ thi đã tồn tại.");
 
-        if (!string.Equals(dto.LoaiChungChi, "NangLucSo", StringComparison.OrdinalIgnoreCase))
-            throw new BusinessException("Hệ thống chỉ hỗ trợ kỳ thi Năng lực số.");
 
         var kt = new KyThi
         {

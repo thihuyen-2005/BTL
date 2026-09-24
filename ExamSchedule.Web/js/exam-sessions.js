@@ -10,6 +10,8 @@ renderLayout("Quản lý Ca thi", "");
 const tbody = document.querySelector("#tblSessions tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formSession");
+let searchTimer;
+let editingSessionId = null;
 
 document.getElementById("btnSchedule").onclick = async () => {
     if (!confirm("Xếp tự động các thí sinh chưa có ca thi? Lịch đã xếp sẽ được giữ nguyên.")) return;
@@ -25,8 +27,10 @@ document.getElementById("btnSchedule").onclick = async () => {
 async function loadSessions() {
     try {
         const status = document.getElementById("filterStatus").value;
+        const keyword = document.getElementById("search").value.trim();
         const qs = new URLSearchParams({ kyThiId });
         if (status) qs.set("trangThai", status);
+        if (keyword) qs.set("keyword", keyword);
 
         const list = await apiFetch("/exam-sessions?" + qs.toString());
 
@@ -57,6 +61,7 @@ async function loadSessions() {
                 <td>
                     <div class="actions-cell">
                         <a class="btn-sm btn-view" href="proctors.html?kyThiId=${kyThiId}&caThiId=${c.caThiId}">👤 Phân công</a>
+                        <button class="btn-sm btn-edit" onclick="editSession(${c.caThiId})">✏️ Sửa</button>
                         <button class="btn-sm btn-del" onclick="cancelSession(${c.caThiId})">🗑️ Hủy</button>
                     </div>
                 </td>
@@ -70,7 +75,7 @@ function formatDateTime(iso) {
     if (!iso) return "";
     const d = new Date(iso);
     const pad = n => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${pad(d.getFullYear())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function trangThaiCaThiLabel(tt) {
@@ -85,7 +90,9 @@ function trangThaiCaThiLabel(tt) {
 }
 
 document.getElementById("btnAdd").onclick = () => {
+    editingSessionId = null;
     form.reset();
+    document.getElementById("modalTitle").textContent = "Thêm ca thi";
     document.getElementById("sucChua").value = 30;
     modal.classList.remove("hidden");
 };
@@ -96,24 +103,46 @@ form.onsubmit = async (e) => {
     e.preventDefault();
 
     const body = {
-        kyThiId: kyThiId,
         phongThiId: parseInt(document.getElementById("phongThi").value),
         thoiGianBatDau: document.getElementById("batDau").value + ":00",
-        thoiGianKetThuc: new Date(new Date(document.getElementById("batDau").value).getTime() + 120 * 60000).toISOString(),
         sucChua: parseInt(document.getElementById("sucChua").value),
         ghiChu: document.getElementById("ghiChu").value
     };
 
     try {
-        await apiFetch("/exam-sessions", {
-            method: "POST",
+        await apiFetch(editingSessionId ? `/exam-sessions/${editingSessionId}` : "/exam-sessions", {
+            method: editingSessionId ? "PUT" : "POST",
             body: JSON.stringify(body)
         });
-        toast("Đã tạo ca thi!", "success");
+        toast(editingSessionId ? "Đã cập nhật ca thi!" : "Đã tạo ca thi!", "success");
         modal.classList.add("hidden");
+        editingSessionId = null;
         loadSessions();
     } catch (err) {
         toast("Không thể tạo ca thi: " + err.message, "error");
+    }
+};
+
+function toDateTimeLocal(iso) {
+    const date = new Date(iso);
+    const pad = value => String(value).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+window.editSession = async function (id) {
+    try {
+        const session = (await apiFetch(`/exam-sessions?kyThiId=${kyThiId}`))
+            .find(item => item.caThiId === id);
+        if (!session) throw new Error("Không tìm thấy ca thi.");
+        editingSessionId = id;
+        document.getElementById("modalTitle").textContent = "Sửa ca thi";
+        document.getElementById("phongThi").value = session.phongThiId;
+        document.getElementById("batDau").value = toDateTimeLocal(session.thoiGianBatDau);
+        document.getElementById("sucChua").value = session.sucChua;
+        document.getElementById("ghiChu").value = session.ghiChu || "";
+        modal.classList.remove("hidden");
+    } catch (error) {
+        toast("Không thể tải ca thi: " + error.message, "error");
     }
 };
 
@@ -129,5 +158,9 @@ window.cancelSession = async function(id) {
 };
 
 document.getElementById("filterStatus").onchange = loadSessions;
+document.getElementById("search").oninput = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadSessions, 200);
+};
 
 loadSessions();

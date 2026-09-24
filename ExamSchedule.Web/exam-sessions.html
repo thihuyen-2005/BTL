@@ -17,6 +17,7 @@
         </div>
 
         <div class="toolbar">
+            <input id="search" placeholder="🔍 Tìm ca thi, phòng, kỳ thi, ghi chú">
             <select id="filterStatus">
                 <option value="">Tất cả trạng thái</option>
                 <option value="Du_kien">Dự kiến</option>
@@ -40,7 +41,7 @@
                         <th>Kết thúc</th>
                         <th style="width:90px;">Sức chứa</th>
                         <th>Trạng thái</th>
-                        <th style="width:100px;">Hành động</th>
+                        <th style="width:230px;">Hành động</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -50,7 +51,7 @@
 
     <div id="modal" class="modal hidden">
         <div class="modal-content">
-            <h2>Thêm ca thi</h2>
+            <h2 id="modalTitle">Thêm ca thi</h2>
             <form id="formSession">
                 <label>Phòng thi
                     <select id="phongThi" required>

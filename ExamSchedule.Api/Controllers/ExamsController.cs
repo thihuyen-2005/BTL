@@ -21,8 +21,8 @@ public class ExamsController : ControllerBase
     [Authorize(Policy = "CanViewExam")]
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1, [FromQuery] int limit = 20,
-        [FromQuery] string? status = null)
-        => Ok(await _svc.GetPagedAsync(page, limit, status));
+        [FromQuery] string? status = null, [FromQuery] string? keyword = null)
+        => Ok(await _svc.GetPagedAsync(page, limit, status, keyword));
 
     [HttpGet("{id}")]
     [Authorize(Policy = "CanViewExam")]

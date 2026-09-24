@@ -12,6 +12,9 @@ public class ExamSessionService
     private readonly AuditService _audit;
     private readonly ExamStatusUpdater _statusUpdater;
 
+    // Thời lượng cố định mỗi ca thi Năng lực số
+    private const int DURATION_MINUTES = 120;
+
     public ExamSessionService(AppDbContext db, AuditService audit,
                               ExamStatusUpdater statusUpdater)
     {
@@ -20,11 +23,23 @@ public class ExamSessionService
         _statusUpdater = statusUpdater;
     }
 
-    public async Task<List<CaThiResponseDto>> GetByKyThiAsync(int kyThiId, string? trangThai)
+    public async Task<List<CaThiResponseDto>> GetByKyThiAsync(
+        int kyThiId, string? trangThai, string? keyword)
     {
         var q = _db.CaThis
             .Include(c => c.KyThi).Include(c => c.PhongThi)
             .Where(c => c.KyThiId == kyThiId);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            keyword = keyword.Trim();
+            q = q.Where(c => c.CaThiId.ToString().Contains(keyword)
+                || c.KyThi.MaKyThi.Contains(keyword)
+                || c.KyThi.TenKyThi.Contains(keyword)
+                || c.PhongThi.MaPhong.Contains(keyword)
+                || c.PhongThi.TenPhong.Contains(keyword)
+                || (c.GhiChu != null && c.GhiChu.Contains(keyword)));
+        }
 
         if (!string.IsNullOrEmpty(trangThai) &&
             Enum.TryParse<TrangThaiCaThi>(trangThai, out var tt))
@@ -38,7 +53,11 @@ public class ExamSessionService
 
     public async Task<CaThiResponseDto> CreateAsync(CaThiCreateDto dto, int userId, string ip)
     {
-        ValidateTime(dto.ThoiGianBatDau, dto.ThoiGianKetThuc, dto.SucChua);
+        // Tự tính thời gian kết thúc = bắt đầu + 120 phút
+        var thoiGianBatDau = dto.ThoiGianBatDau;
+        var thoiGianKetThuc = thoiGianBatDau.AddMinutes(DURATION_MINUTES);
+
+        ValidateTime(thoiGianBatDau, thoiGianKetThuc, dto.SucChua);
 
         var kt = await _db.KyThis.FindAsync(dto.KyThiId)
             ?? throw new NotFoundException("Kỳ thi không tồn tại.");
@@ -51,14 +70,14 @@ public class ExamSessionService
             throw new BusinessException("Kỳ thi đã kết thúc/hủy, không thể tạo ca thi.");
 
         await EnsureNoConflictAsync(dto.PhongThiId,
-            dto.ThoiGianBatDau, dto.ThoiGianKetThuc, ignoreId: 0);
+            thoiGianBatDau, thoiGianKetThuc, ignoreId: 0);
 
         var ca = new CaThi
         {
             KyThiId = dto.KyThiId,
             PhongThiId = dto.PhongThiId,
-            ThoiGianBatDau = dto.ThoiGianBatDau,
-            ThoiGianKetThuc = dto.ThoiGianKetThuc,
+            ThoiGianBatDau = thoiGianBatDau,
+            ThoiGianKetThuc = thoiGianKetThuc,      // tự tính
             SucChua = dto.SucChua,
             GhiChu = dto.GhiChu,
             TrangThai = TrangThaiCaThi.Du_kien
@@ -84,18 +103,24 @@ public class ExamSessionService
         if (ca.TrangThai is TrangThaiCaThi.Dong or TrangThaiCaThi.Huy)
             throw new BusinessException("Ca thi đã đóng/hủy, không thể sửa.");
 
-        ValidateTime(dto.ThoiGianBatDau, dto.ThoiGianKetThuc, dto.SucChua);
+        // Tự tính thời gian kết thúc
+        var thoiGianBatDau = dto.ThoiGianBatDau;
+        var thoiGianKetThuc = thoiGianBatDau.AddMinutes(DURATION_MINUTES);
+
+        ValidateTime(thoiGianBatDau, thoiGianKetThuc, dto.SucChua);
+
         var room = await _db.PhongThis.FindAsync(dto.PhongThiId)
             ?? throw new NotFoundException("Phòng thi không tồn tại.");
         if (dto.SucChua > room.SucChua)
             throw new BusinessException($"Sức chứa ca thi không được vượt quá sức chứa phòng ({room.SucChua}).");
+
         await EnsureNoConflictAsync(dto.PhongThiId,
-            dto.ThoiGianBatDau, dto.ThoiGianKetThuc, ignoreId: id);
+            thoiGianBatDau, thoiGianKetThuc, ignoreId: id);
 
         var old = new { ca.PhongThiId, ca.ThoiGianBatDau, ca.ThoiGianKetThuc, ca.SucChua };
         ca.PhongThiId = dto.PhongThiId;
-        ca.ThoiGianBatDau = dto.ThoiGianBatDau;
-        ca.ThoiGianKetThuc = dto.ThoiGianKetThuc;
+        ca.ThoiGianBatDau = thoiGianBatDau;
+        ca.ThoiGianKetThuc = thoiGianKetThuc;
         ca.SucChua = dto.SucChua;
         ca.GhiChu = dto.GhiChu;
         ca.NgayCapNhat = DateTime.UtcNow;
@@ -159,8 +184,8 @@ public class ExamSessionService
 
     private static void ValidateTime(DateTime start, DateTime end, int sucChua)
     {
-        if (end != start.AddMinutes(120))
-            throw new BusinessException("Mỗi ca thi Năng lực số trên máy phải kéo dài đúng 120 phút.");
+        if (end != start.AddMinutes(DURATION_MINUTES))
+            throw new BusinessException($"Mỗi ca thi Năng lực số trên máy phải kéo dài đúng {DURATION_MINUTES} phút.");
         if (sucChua <= 0)
             throw new BusinessException("Sức chứa phải lớn hơn 0.");
     }
