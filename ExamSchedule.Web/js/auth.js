@@ -1,5 +1,16 @@
 if (getToken()) location.href = "dashboard.html";
 
+const passwordInput = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
+
+togglePassword.onclick = () => {
+    const isHidden = passwordInput.type === "password";
+    passwordInput.type = isHidden ? "text" : "password";
+    togglePassword.textContent = isHidden ? "🙈" : "👁";
+    togglePassword.setAttribute("aria-label", isHidden ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+    togglePassword.title = isHidden ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+};
+
 document.getElementById("formLogin").onsubmit = async (e) => {
     e.preventDefault();
     const errEl = document.getElementById("error");

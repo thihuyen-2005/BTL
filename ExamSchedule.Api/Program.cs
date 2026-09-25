@@ -218,11 +218,38 @@ using (var scope = app.Services.CreateScope())
           , `nganh_hoc` = NULLIF(TRIM(`nganh_hoc`), '');");
     var thiSinhService = scope.ServiceProvider.GetRequiredService<ThiSinhService>();
     await thiSinhService.NormalizeDataIntegrityAsync();
-    db.Database.ExecuteSqlRaw(@"
-        CREATE UNIQUE INDEX IF NOT EXISTS IX_thisinh_so_dien_thoai
-        ON thisinh (so_dien_thoai);
-        CREATE UNIQUE INDEX IF NOT EXISTS IX_thisinh_ma_thisinh
-        ON thisinh (ma_thisinh);");
+
+    // ===== FIX: MySQL không hỗ trợ CREATE INDEX IF NOT EXISTS =====
+    // Phải kiểm tra information_schema.statistics trước rồi mới tạo.
+    void EnsureUniqueIndex(string indexName, string tableName, string columnName)
+    {
+        var exists = db.Database
+            .SqlQueryRaw<int>(
+                @"SELECT COUNT(*) AS `Value`
+                  FROM information_schema.statistics
+                  WHERE table_schema = DATABASE()
+                    AND table_name   = {0}
+                    AND index_name   = {1}",
+                tableName, indexName)
+            .AsEnumerable()
+            .Single() > 0;
+
+        if (exists)
+        {
+            Console.WriteLine($"[Index] Bỏ qua (đã tồn tại): {indexName} trên {tableName}({columnName})");
+            return;
+        }
+
+        // Identifier không tham số hoá được trong MySQL, nhưng ở đây là hằng số nội bộ nên an toàn.
+        db.Database.ExecuteSqlRaw(
+            $"CREATE UNIQUE INDEX `{indexName}` ON `{tableName}` (`{columnName}`);");
+        Console.WriteLine($"[Index] Đã tạo: {indexName} trên {tableName}({columnName})");
+    }
+
+    EnsureUniqueIndex("IX_thisinh_so_dien_thoai", "thisinh", "so_dien_thoai");
+    EnsureUniqueIndex("IX_thisinh_ma_thisinh",   "thisinh", "ma_thisinh");
+    // ===== END FIX =====
+
     var requiredColumnExists = db.Database.SqlQueryRaw<int>(@"
         SELECT COUNT(*) AS `Value` FROM information_schema.columns
         WHERE table_schema = DATABASE()

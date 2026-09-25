@@ -117,6 +117,7 @@ form.onsubmit = async (e) => {
     e.preventDefault();
 
     const body = {
+        kyThiId,
         phongThiId: parseInt(document.getElementById("phongThi").value),
         thoiGianBatDau: document.getElementById("batDau").value + ":00",
         sucChua: parseInt(document.getElementById("sucChua").value),

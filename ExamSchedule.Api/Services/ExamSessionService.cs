@@ -155,6 +155,8 @@ public class ExamSessionService
 
         if (ca.TrangThai == TrangThaiCaThi.Dong)
             throw new BusinessException("Ca thi đã đóng, không thể hủy.");
+        if (ca.TrangThai == TrangThaiCaThi.Huy)
+            throw new BusinessException("Ca thi đã bị hủy, không thể hủy lại.");
 
         ca.TrangThai = TrangThaiCaThi.Huy;
         ca.NgayCapNhat = DateTime.UtcNow;

@@ -10,6 +10,8 @@ const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 let searchTimer;
 let loadRequestId = 0;
 let selectedExamIds = new Set();
+let examCache = [];
+const examCacheKey = "exam-list-cache";
 
 function syncSelectedRows() {
     selectedExamIds = new Set([...document.querySelectorAll('.exam-row-select:checked')].map(item => Number(item.dataset.id)));
@@ -22,50 +24,63 @@ function syncSelectedRows() {
 async function loadExams() {
     const requestId = ++loadRequestId;
     try {
-        const status = document.getElementById("filterStatus").value;
-        const keyword = document.getElementById("search").value.trim();
-
-        const qs = new URLSearchParams({ page: 1, limit: 100 });
-        if (status) qs.set("status", status);
-        if (keyword) qs.set("keyword", keyword);
-
-        const data = await apiFetch("/exams?" + qs.toString());
+        const data = await apiFetch("/exams?page=1&limit=100");
         if (requestId !== loadRequestId) return;
-        const items = data.items || data;
-
-        if (items.length === 0) {
-            tbody.innerHTML = `
-                <tr><td colspan="10">
-                    <div class="empty">
-                        <div class="icon">📭</div>
-                        <div>Chưa có kỳ thi nào</div>
-                    </div>
-                </td></tr>`;
-            return;
+        examCache = data.items || data;
+        renderExams();
+        try {
+            sessionStorage.setItem(examCacheKey, JSON.stringify(examCache));
+        } catch {
+            // Bỏ qua nếu trình duyệt không cho phép lưu sessionStorage.
         }
-
-        tbody.innerHTML = items.map(k => `
-            <tr>
-                <td class="checkbox-col"><input class="exam-row-select" type="checkbox" data-id="${k.kyThiId}" ${selectedExamIds.has(k.kyThiId) ? "checked" : ""}></td>
-                <td>${k.kyThiId}</td>
-                <td><strong>${k.maKyThi}</strong></td>
-                <td>${k.tenKyThi}</td>
-                <td>${formatDate(k.thoiGianBatDauDk)}</td>
-                <td>${formatDate(k.thoiGianKetThucDk)}</td>
-                <td><span class="badge ${k.trangThai}">${trangThaiLabel(k.trangThai)}</span></td>
-                <td>${k.soCaThi || 0}</td>
-                <td class="sticky-action">
-                    <div class="actions-cell">
-                        <button class="btn-sm btn-edit" onclick="editExam(${k.kyThiId})">✏️ Sửa</button>
-                        <button class="btn-sm btn-del" onclick="deleteExam(${k.kyThiId})">🗑️ Xóa</button>
-                        <a class="btn-sm btn-view" href="exam-sessions.html?kyThiId=${k.kyThiId}">🕐 Ca thi</a>
-                    </div>
-                </td>
-            </tr>`).join("");
-        syncSelectedRows();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
+        if (!examCache.length) {
+            tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
+        }
     }
+}
+
+function renderExams() {
+    const status = document.getElementById("filterStatus").value;
+    const keyword = document.getElementById("search").value.trim().toLowerCase();
+    const items = examCache.filter(exam => {
+        const matchesStatus = !status || exam.trangThai === status;
+        const matchesKeyword = !keyword
+            || exam.maKyThi.toLowerCase().includes(keyword)
+            || exam.tenKyThi.toLowerCase().includes(keyword);
+        return matchesStatus && matchesKeyword;
+    });
+
+    if (items.length === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="10">
+                <div class="empty">
+                    <div class="icon">📭</div>
+                    <div>Chưa có kỳ thi nào</div>
+                </div>
+            </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = items.map(k => `
+        <tr>
+            <td class="checkbox-col"><input class="exam-row-select" type="checkbox" data-id="${k.kyThiId}" ${selectedExamIds.has(k.kyThiId) ? "checked" : ""}></td>
+            <td>${k.kyThiId}</td>
+            <td><strong>${k.maKyThi}</strong></td>
+            <td>${k.tenKyThi}</td>
+            <td>${formatDate(k.thoiGianBatDauDk)}</td>
+            <td>${formatDate(k.thoiGianKetThucDk)}</td>
+            <td><span class="badge ${k.trangThai}">${trangThaiLabel(k.trangThai)}</span></td>
+            <td>${k.soCaThi || 0}</td>
+            <td class="sticky-action">
+                <div class="actions-cell">
+                    <button class="btn-sm btn-edit" onclick="editExam(${k.kyThiId})">✏️ Sửa</button>
+                    <button class="btn-sm btn-del" onclick="deleteExam(${k.kyThiId})">🗑️ Xóa</button>
+                    <a class="btn-sm btn-view" href="exam-sessions.html?kyThiId=${k.kyThiId}">🕐 Ca thi</a>
+                </div>
+            </td>
+        </tr>`).join("");
+    syncSelectedRows();
 }
 
 function trangThaiLabel(tt) {
@@ -98,7 +113,6 @@ window.editExam = async function(id) {
         document.getElementById("kyThiId").value      = k.kyThiId;
         document.getElementById("maKyThi").value      = k.maKyThi;
         document.getElementById("tenKyThi").value     = k.tenKyThi;
-        document.getElementById("loaiChungChi").value = "NangLucSo";
         document.getElementById("batDauDk").value     = k.thoiGianBatDauDk.substring(0, 10);
         document.getElementById("ketThucDk").value    = k.thoiGianKetThucDk.substring(0, 10);
         document.getElementById("ghiChu").value       = k.ghiChu || "";
@@ -184,10 +198,16 @@ form.onsubmit = async (e) => {
     }
 };
 
-document.getElementById("filterStatus").onchange = loadExams;
-document.getElementById("search").oninput = () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(loadExams, 200);
-};
+document.getElementById("filterStatus").onchange = renderExams;
+document.getElementById("search").oninput = renderExams;
 
+try {
+    examCache = JSON.parse(sessionStorage.getItem(examCacheKey) || "[]");
+    renderExams();
+} catch {
+    examCache = [];
+}
+if (!examCache.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><div class="icon">⏳</div><div>Đang tải danh sách kỳ thi...</div></div></td></tr>`;
+}
 loadExams();

@@ -17,13 +17,22 @@
         <div class="card" style="max-width: 560px; padding: 28px;">
             <form id="formChangePw">
                 <label>Mật khẩu hiện tại
-                    <input type="password" id="oldPw" required autocomplete="current-password">
+                    <span class="password-field">
+                        <input type="password" id="oldPw" required autocomplete="off">
+                        <button type="button" class="password-toggle" data-password-target="oldPw" aria-label="Hiện mật khẩu hiện tại" title="Hiện mật khẩu hiện tại">👁</button>
+                    </span>
                 </label>
                 <label>Mật khẩu mới (≥ 6 ký tự)
-                    <input type="password" id="newPw" required minlength="6" autocomplete="new-password">
+                    <span class="password-field">
+                        <input type="password" id="newPw" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle" data-password-target="newPw" aria-label="Hiện mật khẩu mới" title="Hiện mật khẩu mới">👁</button>
+                    </span>
                 </label>
                 <label>Nhập lại mật khẩu mới
-                    <input type="password" id="confirmPw" required minlength="6" autocomplete="new-password">
+                    <span class="password-field">
+                        <input type="password" id="confirmPw" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle" data-password-target="confirmPw" aria-label="Hiện mật khẩu xác nhận" title="Hiện mật khẩu xác nhận">👁</button>
+                    </span>
                 </label>
                 <div class="actions">
                     <button type="submit">Đổi mật khẩu</button>
@@ -37,6 +46,17 @@
     <script>
         if (!getToken()) location.href = "index.html";
         renderLayout("Đổi mật khẩu", "");
+
+        document.querySelectorAll(".password-toggle").forEach(button => {
+            button.onclick = () => {
+                const input = document.getElementById(button.dataset.passwordTarget);
+                const isHidden = input.type === "password";
+                input.type = isHidden ? "text" : "password";
+                button.textContent = isHidden ? "🙈" : "👁";
+                button.setAttribute("aria-label", isHidden ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+                button.title = isHidden ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+            };
+        });
 
         document.getElementById("formChangePw").onsubmit = async (e) => {
             e.preventDefault();

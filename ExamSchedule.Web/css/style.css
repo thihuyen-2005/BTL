@@ -93,6 +93,26 @@ a:hover { color: var(--primary-h); }
     color: var(--slate); text-align: center;
     font-size: 13px; margin-bottom: 28px;
 }
+.password-field {
+    display: block;
+    position: relative;
+}
+.password-field input {
+    padding-right: 42px;
+}
+.password-toggle {
+    position: absolute;
+    top: 50%; right: 8px;
+    width: 30px; height: 30px;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--slate);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+.password-toggle:hover { color: var(--primary); }
 .login-box button[type=submit] {
     width: 100%; padding: 12px;
     background: var(--primary); color: #fff;
@@ -309,6 +329,36 @@ table {
     background: var(--card);
     min-width: 1700px;
 }
+#tblSessions {
+    min-width: 1260px;
+    table-layout: fixed;
+}
+#tblSessions th,
+#tblSessions td {
+    text-align: center;
+    vertical-align: middle;
+}
+#tblSessions th:nth-child(1),
+#tblSessions td:nth-child(1) { width: 54px; }
+#tblSessions th:nth-child(2),
+#tblSessions td:nth-child(2) { width: 70px; }
+#tblSessions th:nth-child(3),
+#tblSessions td:nth-child(3) { width: 190px; }
+#tblSessions th:nth-child(4),
+#tblSessions td:nth-child(4),
+#tblSessions th:nth-child(5),
+#tblSessions td:nth-child(5) { width: 260px; }
+#tblSessions th:nth-child(6),
+#tblSessions td:nth-child(6) { width: 110px; }
+#tblSessions th:nth-child(7),
+#tblSessions td:nth-child(7) { width: 150px; }
+#tblSessions th:last-child,
+#tblSessions td:last-child {
+    width: 330px;
+}
+.sessions-card {
+    overflow-x: auto;
+}
 th, td {
     padding: 13px 16px;
     text-align: left;
@@ -424,6 +474,135 @@ tbody tr:hover td.sticky-action {
 
 /* ============ ACTION BUTTONS ============ */
 td .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+#tblSessions td:last-child .actions-cell {
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+#tblExams {
+    min-width: 1514px;
+    table-layout: fixed;
+}
+#tblExams th,
+#tblExams td {
+    text-align: center;
+    vertical-align: middle;
+}
+#tblExams th:nth-child(1),
+#tblExams td:nth-child(1) { width: 54px; }
+#tblExams th:nth-child(2),
+#tblExams td:nth-child(2) { width: 70px; }
+#tblExams th:nth-child(3),
+#tblExams td:nth-child(3) { width: 180px; }
+#tblExams th:nth-child(4),
+#tblExams td:nth-child(4) { width: 300px; }
+#tblExams th:nth-child(5),
+#tblExams td:nth-child(5),
+#tblExams th:nth-child(6),
+#tblExams td:nth-child(6) { width: 200px; }
+#tblExams th:nth-child(7),
+#tblExams td:nth-child(7) { width: 150px; }
+#tblExams th:nth-child(8),
+#tblExams td:nth-child(8) { width: 100px; }
+#tblExams th:last-child,
+#tblExams td:last-child { width: 260px; }
+#tblExams td:last-child .actions-cell {
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+#tblUsers {
+    min-width: 1390px;
+    table-layout: fixed;
+}
+#tblUsers th,
+#tblUsers td {
+    padding: 10px 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+#tblUsers th:nth-child(1),
+#tblUsers td:nth-child(1) { width: 70px; }
+#tblUsers th:nth-child(2),
+#tblUsers td:nth-child(2) { width: 180px; }
+#tblUsers th:nth-child(3),
+#tblUsers td:nth-child(3) { width: 260px; }
+#tblUsers th:nth-child(4),
+#tblUsers td:nth-child(4) { width: 300px; }
+#tblUsers th:nth-child(5),
+#tblUsers td:nth-child(5) { width: 160px; }
+#tblUsers th:nth-child(6),
+#tblUsers td:nth-child(6) { width: 140px; }
+#tblUsers th:last-child,
+#tblUsers td:last-child { width: 280px; }
+#tblUsers td:last-child .actions-cell {
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+.users-card {
+    overflow-x: auto;
+}
+#tblProctors {
+    min-width: 1544px;
+    table-layout: fixed;
+}
+#tblProctors th,
+#tblProctors td {
+    padding: 10px 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+#tblProctors th:nth-child(1),
+#tblProctors td:nth-child(1) { width: 54px; }
+#tblProctors th:nth-child(2),
+#tblProctors td:nth-child(2) { width: 140px; }
+#tblProctors th:nth-child(3),
+#tblProctors td:nth-child(3) { width: 220px; }
+#tblProctors th:nth-child(4),
+#tblProctors td:nth-child(4) { width: 230px; }
+#tblProctors th:nth-child(5),
+#tblProctors td:nth-child(5) { width: 300px; }
+#tblProctors th:nth-child(6),
+#tblProctors td:nth-child(6) { width: 160px; }
+#tblProctors th:nth-child(7),
+#tblProctors td:nth-child(7) { width: 140px; }
+#tblProctors th:nth-child(8),
+#tblProctors td:nth-child(8) { width: 100px; }
+#tblProctors th:last-child,
+#tblProctors td:last-child { width: 240px; }
+#tblProctors td:last-child .actions-cell {
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+.proctors-card {
+    overflow-x: auto;
+}
+#scheduleBody .card {
+    overflow: hidden;
+}
+#scheduleModal .modal-content {
+    width: min(1000px, 94vw);
+    min-width: 0;
+}
+#scheduleBody table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+#scheduleBody th,
+#scheduleBody td {
+    padding: 10px 12px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#scheduleBody th:nth-child(1),
+#scheduleBody td:nth-child(1) { width: 38%; }
+#scheduleBody th:nth-child(2),
+#scheduleBody td:nth-child(2) { width: 27%; }
+#scheduleBody th:nth-child(3),
+#scheduleBody td:nth-child(3) { width: 20%; }
+#scheduleBody th:nth-child(4),
+#scheduleBody td:nth-child(4) { width: 15%; }
 .btn-sm {
     padding: 5px 11px;
     font-size: 12px;

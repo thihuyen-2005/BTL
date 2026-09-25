@@ -16,7 +16,10 @@
                 <input id="username" required autocomplete="username" autofocus>
             </label>
             <label>Mật khẩu
-                <input type="password" id="password" required autocomplete="current-password">
+                <span class="password-field">
+                    <input type="password" id="password" required autocomplete="current-password">
+                    <button type="button" id="togglePassword" class="password-toggle" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">👁</button>
+                </span>
             </label>
             <button type="submit">Đăng nhập</button>
             <p id="error" class="error"></p>
