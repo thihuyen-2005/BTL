@@ -8,8 +8,97 @@ const importModal = document.getElementById("importModal");
 const selectAll = document.getElementById("selectAllRows");
 const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 const validationMessage = document.getElementById("manualValidationMessage");
+const khoaOptions = [
+    "Khoa Giáo dục thể chất - Quốc phòng và An ninh",
+    "Khoa Khoa học Xã hội và Nhân văn",
+    "Khoa Kỹ thuật và Môi trường",
+    "Khoa Kinh tế và Du lịch",
+    "Khoa Ngoại ngữ",
+    "Khoa Quản lý và Đô thị",
+    "Khoa Sư phạm",
+    "Khoa Toán - Công nghệ thông tin",
+    "Viện Hà Nội học và Đào tạo quốc tế"
+];
+const nganhTheoKhoa = {
+    "Khoa Giáo dục thể chất - Quốc phòng và An ninh": ["Giáo dục thể chất (ĐH)"],
+    "Khoa Khoa học Xã hội và Nhân văn": ["Chính trị học (ĐH)", "Công tác xã hội (ĐH)", "Luật (ĐH)", "Quản lý Giáo dục (ĐH)", "Tâm lý học (ĐH)", "Văn học (ĐH)"],
+    "Khoa Kỹ thuật và Môi trường": ["Công nghệ - Kỹ thuật môi trường (ĐH)"],
+    "Khoa Kinh tế và Du lịch": ["Quản lý kinh tế (ĐH)", "Quản trị dịch vụ du lịch và lữ hành (ĐH)", "Quản trị khách sạn (ĐH)", "Quản trị Kinh doanh (ĐH)", "Tài chính - Ngân hàng (ĐH)"],
+    "Khoa Ngoại ngữ": ["Ngôn ngữ Anh (ĐH)", "Ngôn ngữ Trung Quốc (ĐH)", "Sư phạm Tiếng Anh (ĐH)"],
+    "Khoa Quản lý và Đô thị": ["Logistics và quản lý chuỗi ứng (ĐH)", "Quản lý công (ĐH)"],
+    "Khoa Sư phạm": ["Giáo dục Công dân (ĐH)", "Giáo dục đặc biệt (ĐH)", "Giáo dục Mầm non - Giáo dục hòa nhập (ĐH)", "Giáo dục Mầm non (ĐH)", "Giáo dục Tiểu học - Giáo dục hòa nhập (ĐH)", "Giáo dục Tiểu học (ĐH)", "Giáo dục Tiểu học tiên tiến (ĐH)", "SP Lịch sử (ĐH)", "SP Ngữ văn (ĐH)", "SP Toán học (ĐH)", "SP Vật lý (ĐH)"],
+    "Khoa Toán - Công nghệ thông tin": ["Công nghệ Thông tin (ĐH)", "Sư phạm Tin học (ĐH)", "Toán ứng dụng (ĐH)"],
+    "Viện Hà Nội học và Đào tạo quốc tế": ["Văn hóa học (ĐH)", "Việt Nam học (ĐH)"]
+};
 let candidates = [];
 let selectedIds = new Set();
+
+function populateAcademicSelects() {
+    const formKhoa = document.getElementById("khoa");
+    const filterKhoa = document.getElementById("filterKhoa");
+
+    const renderKhoaOptions = (select, emptyLabel) => {
+        const currentValue = select.value;
+        select.innerHTML = `<option value="">${emptyLabel}</option>`;
+        khoaOptions.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item;
+            option.textContent = item;
+            if (item === currentValue) option.selected = true;
+            select.appendChild(option);
+        });
+    };
+
+    renderKhoaOptions(formKhoa, "-- Chọn khoa --");
+    renderKhoaOptions(filterKhoa, "Tất cả khoa");
+
+    const filterNganh = document.getElementById("filterNganh");
+    const majorSelect = document.getElementById("nganhHoc");
+    const selectedKhoa = formKhoa.value;
+    const selectedFilterKhoa = filterKhoa.value;
+    const renderMajorOptions = (select, emptyLabel, khoaValue) => {
+        const currentValue = select.value;
+        const majors = khoaValue && nganhTheoKhoa[khoaValue] ? nganhTheoKhoa[khoaValue] : [];
+        select.innerHTML = `<option value="">${emptyLabel}</option>`;
+        majors.forEach(major => {
+            const option = document.createElement("option");
+            option.value = major;
+            option.textContent = major;
+            if (major === currentValue) option.selected = true;
+            select.appendChild(option);
+        });
+    };
+    renderMajorOptions(majorSelect, "-- Chọn ngành --", selectedKhoa);
+    renderMajorOptions(filterNganh, "Tất cả ngành", selectedFilterKhoa);
+}
+
+function refreshMajorOptionsForForm(selectedKhoa) {
+    const majorSelect = document.getElementById("nganhHoc");
+    const currentValue = majorSelect.value;
+    const majors = selectedKhoa && nganhTheoKhoa[selectedKhoa] ? nganhTheoKhoa[selectedKhoa] : [];
+    majorSelect.innerHTML = '<option value="">-- Chọn ngành --</option>';
+    majors.forEach(major => {
+        const option = document.createElement("option");
+        option.value = major;
+        option.textContent = major;
+        if (major === currentValue) option.selected = true;
+        majorSelect.appendChild(option);
+    });
+}
+
+function populateFilterMajorOptions(selectedKhoa) {
+    const filterNganh = document.getElementById("filterNganh");
+    const currentValue = filterNganh.value;
+    const majors = selectedKhoa && nganhTheoKhoa[selectedKhoa] ? nganhTheoKhoa[selectedKhoa] : [];
+    filterNganh.innerHTML = '<option value="">Tất cả ngành</option>';
+    majors.forEach(major => {
+        const option = document.createElement("option");
+        option.value = major;
+        option.textContent = major;
+        if (major === currentValue) option.selected = true;
+        filterNganh.appendChild(option);
+    });
+}
 
 const REQUIRED_FIELDS = [
     { id: "hoTen", label: "Họ và tên" },
@@ -102,6 +191,7 @@ async function loadCandidates() {
 document.getElementById("btnManual").onclick = () => {
     document.getElementById("candidateForm").reset();
     document.getElementById("candidateId").value = "";
+    populateAcademicSelects();
     clearValidationState();
     document.getElementById("manualTitle").textContent = "Thêm thí sinh";
     manualModal.classList.remove("hidden");
@@ -115,13 +205,20 @@ document.getElementById("btnRefreshFilters").onclick = () => {
     document.getElementById("filterNganh").value = "";
     document.getElementById("filterKhoa").value = "";
     document.getElementById("filterPaid").value = "";
+    populateAcademicSelects();
     selectedIds.clear();
     loadCandidates();
 };
 document.getElementById("search").oninput = loadCandidates;
 document.getElementById("filterLop").oninput = loadCandidates;
-document.getElementById("filterNganh").oninput = loadCandidates;
-document.getElementById("filterKhoa").oninput = loadCandidates;
+document.getElementById("filterNganh").onchange = loadCandidates;
+document.getElementById("filterKhoa").onchange = () => {
+    populateFilterMajorOptions(document.getElementById("filterKhoa").value);
+    loadCandidates();
+};
+document.getElementById("khoa").addEventListener("change", event => {
+    refreshMajorOptionsForForm(event.target.value);
+});
 document.getElementById("filterPaid").onchange = loadCandidates;
 
 tbody.addEventListener("change", (event) => {
@@ -144,7 +241,13 @@ window.editCandidate = id => {
     set("candidateId", candidate.thiSinhId); set("maThiSinh", candidate.maThiSinh); set("hoTen", candidate.hoTen);
     set("ngaySinh", candidate.ngaySinh?.substring(0, 10)); set("gioiTinh", candidate.gioiTinh);
     set("soCccdHoChieu", candidate.soCccdHoChieu); set("soDienThoai", candidate.soDienThoai);
-    set("lop", candidate.lop); set("nganhHoc", candidate.nganhHoc); set("khoa", candidate.khoa);
+    set("lop", candidate.lop); set("khoa", candidate.khoa || "");
+
+    const khoaSelect = document.getElementById("khoa");
+    const majorSelect = document.getElementById("nganhHoc");
+    const selectedKhoa = khoaSelect.value || "";
+    refreshMajorOptionsForForm(selectedKhoa);
+    majorSelect.value = candidate.nganhHoc || "";
     set("soTien", candidate.soTien == null ? "0" : String(candidate.soTien)); set("emailCaNhan", candidate.emailCaNhan);
     document.getElementById("manualTitle").textContent = "Sửa thông tin thí sinh";
     manualModal.classList.remove("hidden");
@@ -199,6 +302,7 @@ document.getElementById("candidateForm").onsubmit = async event => {
         await apiFetch(id ? `/thisinh/${id}` : "/thisinh", { method: id ? "PUT" : "POST", body: JSON.stringify(payload) });
         manualModal.classList.add("hidden");
         event.target.reset();
+        populateAcademicSelects();
         clearValidationState();
         toast("Đã lưu thí sinh", "success");
         loadCandidates();
@@ -220,4 +324,5 @@ document.getElementById("btnSaveImport").onclick = async () => {
     }
 };
 
+populateAcademicSelects();
 loadCandidates();

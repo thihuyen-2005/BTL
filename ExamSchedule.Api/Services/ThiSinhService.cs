@@ -27,8 +27,15 @@ public class ThiSinhService
         if (!string.IsNullOrWhiteSpace(tuKhoa))
             query = query.Where(x => x.MaThiSinh.Contains(tuKhoa) || x.HoTen.Contains(tuKhoa));
         if (!string.IsNullOrWhiteSpace(lop)) query = query.Where(x => x.Lop == lop);
-        if (!string.IsNullOrWhiteSpace(nganhHoc)) query = query.Where(x => x.NganhHoc == nganhHoc);
-        if (!string.IsNullOrWhiteSpace(khoa)) query = query.Where(x => x.Khoa == khoa);
+
+        var normalizedKhoa = AcademicCatalog.NormalizeKhoa(khoa);
+        if (!string.IsNullOrWhiteSpace(normalizedKhoa))
+            query = query.Where(x => x.Khoa == normalizedKhoa || AcademicCatalog.NormalizeKhoa(x.Khoa) == normalizedKhoa);
+
+        var normalizedNganh = AcademicCatalog.NormalizeNganhHoc(normalizedKhoa, nganhHoc);
+        if (!string.IsNullOrWhiteSpace(normalizedNganh))
+            query = query.Where(x => x.NganhHoc == normalizedNganh || AcademicCatalog.NormalizeNganhHoc(x.Khoa, x.NganhHoc) == normalizedNganh);
+
         if (daNop.HasValue)
         {
             if (daNop.Value)
@@ -279,8 +286,8 @@ public class ThiSinhService
         candidate.SoCccdHoChieu = dto.SoCccdHoChieu;
         candidate.SoDienThoai = dto.SoDienThoai;
         candidate.Lop = dto.Lop;
-        candidate.NganhHoc = dto.NganhHoc;
-        candidate.Khoa = dto.Khoa;
+        candidate.Khoa = AcademicCatalog.NormalizeKhoa(dto.Khoa);
+        candidate.NganhHoc = AcademicCatalog.NormalizeNganhHoc(candidate.Khoa, dto.NganhHoc);
         candidate.SoTien = dto.SoTien;
         candidate.EmailCaNhan = dto.EmailCaNhan;
     }

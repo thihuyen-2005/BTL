@@ -161,7 +161,61 @@ using (var scope = app.Services.CreateScope())
             `ten_ky_thi` = CONCAT('Kỳ thi Năng lực số - ', `ma_ky_thi`);
         UPDATE `ca_thi`
         SET `thoi_gian_ket_thuc` = DATE_ADD(`thoi_gian_bat_dau`, INTERVAL 120 MINUTE),
-            `hinh_thuc_thi` = 'TrenMay';");
+            `hinh_thuc_thi` = 'TrenMay';
+        UPDATE `thisinh`
+        SET `khoa` = CASE
+            WHEN TRIM(`khoa`) = 'Khoa GDTC - QPAN' THEN 'Khoa Giáo dục thể chất - Quốc phòng và An ninh'
+            WHEN TRIM(`khoa`) IN ('Khoa KHXH & NV', 'Khoa Khoa học Xã hội và Nhân văn', 'Khoa Khoa học Xã hội & Nhân văn') THEN 'Khoa Khoa học Xã hội và Nhân văn'
+            WHEN TRIM(`khoa`) IN ('Khoa KT & MT', 'Khoa Kỹ thuật và Môi trường') THEN 'Khoa Kỹ thuật và Môi trường'
+            WHEN TRIM(`khoa`) IN ('Khoa KT & Du lịch', 'Khoa Kinh tế và Du lịch') THEN 'Khoa Kinh tế và Du lịch'
+            WHEN TRIM(`khoa`) IN ('Khoa Ngoại ngữ') THEN 'Khoa Ngoại ngữ'
+            WHEN TRIM(`khoa`) IN ('Khoa QL & Đô thị', 'Khoa Quản lý và Đô thị') THEN 'Khoa Quản lý và Đô thị'
+            WHEN TRIM(`khoa`) IN ('Khoa Sư phạm', 'Khoa SP') THEN 'Khoa Sư phạm'
+            WHEN TRIM(`khoa`) IN ('Khoa Toán - CNTT', 'Khoa Toán - Công nghệ thông tin') THEN 'Khoa Toán - Công nghệ thông tin'
+            WHEN TRIM(`khoa`) IN ('Viện Hà Nội học và Đào tạo quốc tế', 'Vien Ha Noi hoc va Dao tao quoc te') THEN 'Viện Hà Nội học và Đào tạo quốc tế'
+            ELSE TRIM(`khoa`)
+        END;
+        UPDATE `thisinh`
+        SET `nganh_hoc` = CASE
+            WHEN TRIM(`khoa`) = 'Khoa Giáo dục thể chất - Quốc phòng và An ninh' AND TRIM(`nganh_hoc`) IN ('GDTC', 'Giáo dục thể chất') THEN 'Giáo dục thể chất (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Chính trị học', 'CTH') THEN 'Chính trị học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Công tác xã hội', 'CTXH') THEN 'Công tác xã hội (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Luật', 'Luat') THEN 'Luật (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Quản lý Giáo dục', 'QLGD') THEN 'Quản lý Giáo dục (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Tâm lý học', 'Tâm lý') THEN 'Tâm lý học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Khoa học Xã hội và Nhân văn' AND TRIM(`nganh_hoc`) IN ('Văn học', 'VH') THEN 'Văn học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kỹ thuật và Môi trường' AND TRIM(`nganh_hoc`) IN ('Công nghệ - Kỹ thuật môi trường', 'CNTTMT') THEN 'Công nghệ - Kỹ thuật môi trường (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kinh tế và Du lịch' AND TRIM(`nganh_hoc`) IN ('Quản lý kinh tế', 'QLKT') THEN 'Quản lý kinh tế (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kinh tế và Du lịch' AND TRIM(`nganh_hoc`) IN ('Quản trị dịch vụ du lịch và lữ hành', 'QTDVDL') THEN 'Quản trị dịch vụ du lịch và lữ hành (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kinh tế và Du lịch' AND TRIM(`nganh_hoc`) IN ('Quản trị khách sạn', 'QTKS') THEN 'Quản trị khách sạn (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kinh tế và Du lịch' AND TRIM(`nganh_hoc`) IN ('Quản trị Kinh doanh', 'QTKD') THEN 'Quản trị Kinh doanh (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Kinh tế và Du lịch' AND TRIM(`nganh_hoc`) IN ('Tài chính - Ngân hàng', 'TCNH') THEN 'Tài chính - Ngân hàng (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Ngoại ngữ' AND TRIM(`nganh_hoc`) IN ('Ngôn ngữ Anh', 'NNA') THEN 'Ngôn ngữ Anh (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Ngoại ngữ' AND TRIM(`nganh_hoc`) IN ('Ngôn ngữ Trung Quốc', 'NNTC') THEN 'Ngôn ngữ Trung Quốc (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Ngoại ngữ' AND TRIM(`nganh_hoc`) IN ('Sư phạm Tiếng Anh', 'SPTA') THEN 'Sư phạm Tiếng Anh (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Quản lý và Đô thị' AND TRIM(`nganh_hoc`) IN ('Logistics và quản lý chuỗi ứng', 'Logistics') THEN 'Logistics và quản lý chuỗi ứng (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Quản lý và Đô thị' AND TRIM(`nganh_hoc`) IN ('Quản lý công', 'QLC') THEN 'Quản lý công (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Công dân', 'GDCD') THEN 'Giáo dục Công dân (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục đặc biệt', 'GDDB') THEN 'Giáo dục đặc biệt (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Mầm non - Giáo dục hòa nhập', 'GDMN-HN') THEN 'Giáo dục Mầm non - Giáo dục hòa nhập (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Mầm non', 'GDMN') THEN 'Giáo dục Mầm non (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Tiểu học - Giáo dục hòa nhập', 'GDTH-HN') THEN 'Giáo dục Tiểu học - Giáo dục hòa nhập (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Tiểu học', 'GDTH') THEN 'Giáo dục Tiểu học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('Giáo dục Tiểu học tiên tiến', 'GDTHTT') THEN 'Giáo dục Tiểu học tiên tiến (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('SP Lịch sử', 'SPLS') THEN 'SP Lịch sử (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('SP Ngữ văn', 'SPNV') THEN 'SP Ngữ văn (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('SP Toán học', 'SPTOAN') THEN 'SP Toán học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Sư phạm' AND TRIM(`nganh_hoc`) IN ('SP Vật lý', 'SPVL') THEN 'SP Vật lý (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Toán - Công nghệ thông tin' AND TRIM(`nganh_hoc`) IN ('Công nghệ Thông tin', 'CNTT') THEN 'Công nghệ Thông tin (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Toán - Công nghệ thông tin' AND TRIM(`nganh_hoc`) IN ('Sư phạm Tin học', 'SPTH') THEN 'Sư phạm Tin học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Khoa Toán - Công nghệ thông tin' AND TRIM(`nganh_hoc`) IN ('Toán ứng dụng', 'TUD') THEN 'Toán ứng dụng (ĐH)'
+            WHEN TRIM(`khoa`) = 'Viện Hà Nội học và Đào tạo quốc tế' AND TRIM(`nganh_hoc`) IN ('Văn hóa học', 'VHH') THEN 'Văn hóa học (ĐH)'
+            WHEN TRIM(`khoa`) = 'Viện Hà Nội học và Đào tạo quốc tế' AND TRIM(`nganh_hoc`) IN ('Việt Nam học', 'VNH') THEN 'Việt Nam học (ĐH)'
+            ELSE TRIM(`nganh_hoc`)
+        END;
+        UPDATE `thisinh`
+        SET `khoa` = NULLIF(TRIM(`khoa`), '')
+          , `nganh_hoc` = NULLIF(TRIM(`nganh_hoc`), '');");
     var requiredColumnExists = db.Database.SqlQueryRaw<int>(@"
         SELECT COUNT(*) AS `Value` FROM information_schema.columns
         WHERE table_schema = DATABASE()

@@ -17,8 +17,12 @@
         <div class="toolbar">
             <input id="search" placeholder="🔍 Mã hoặc họ tên">
             <input id="filterLop" placeholder="Lọc theo lớp">
-            <input id="filterNganh" placeholder="Lọc theo ngành">
-            <input id="filterKhoa" placeholder="Lọc theo khoa">
+            <select id="filterKhoa">
+                <option value="">Tất cả khoa</option>
+            </select>
+            <select id="filterNganh">
+                <option value="">Tất cả ngành</option>
+            </select>
             <select id="filterPaid">
                 <option value="">Tất cả trạng thái nộp</option>
                 <option value="paid">Đã nộp 800.000</option>
@@ -53,8 +57,16 @@
                 <label class="field-label required">Số CCCD/Hộ chiếu<input id="soCccdHoChieu"></label>
                 <label class="field-label required">Số điện thoại<input id="soDienThoai"></label>
                 <label class="field-label required">Lớp<input id="lop"></label>
-                <label class="field-label required">Ngành học<input id="nganhHoc"></label>
-                <label class="field-label required">Khoa<input id="khoa"></label>
+                <label class="field-label required">Khoa
+                    <select id="khoa">
+                        <option value="">-- Chọn khoa --</option>
+                    </select>
+                </label>
+                <label class="field-label required">Ngành học
+                    <select id="nganhHoc">
+                        <option value="">-- Chọn ngành --</option>
+                    </select>
+                </label>
                 <label class="field-label required">Tình trạng học phí
                     <select id="soTien">
                         <option value="">-- Chọn tình trạng học phí --</option>
