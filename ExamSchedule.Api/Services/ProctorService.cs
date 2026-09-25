@@ -92,6 +92,21 @@ public class ProctorService
             assignments.Count, assignments);
     }
 
+    public async Task DeleteProfileAsync(int profileId, int actorId, string ip)
+    {
+        var profile = await _db.ProctorProfiles
+            .Include(p => p.Assignments)
+            .FirstOrDefaultAsync(p => p.ProctorProfileId == profileId)
+            ?? throw new NotFoundException("Không tìm thấy giám thị.");
+
+        if (profile.Assignments.Count > 0)
+            _db.ProctorAssignments.RemoveRange(profile.Assignments);
+
+        _db.ProctorProfiles.Remove(profile);
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync(actorId, "DELETE", "PROCTOR_PROFILE", profileId, profile, null, ip);
+    }
+
     public async Task<ProctorAssignmentDto> GetAssignmentAsync(int assignmentId)
     {
         var assignment = await _db.ProctorAssignments.AsNoTracking()

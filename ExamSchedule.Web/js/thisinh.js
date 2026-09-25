@@ -5,30 +5,51 @@ renderLayout("Quản lý Thí sinh", "");
 const tbody = document.querySelector("#tblCandidates tbody");
 const manualModal = document.getElementById("manualModal");
 const importModal = document.getElementById("importModal");
+const selectAll = document.getElementById("selectAllRows");
+const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 let candidates = [];
+let selectedIds = new Set();
 
 function formatDate(value) {
     return value ? new Date(value).toLocaleDateString("vi-VN") : "";
 }
 
+function syncSelectedRows() {
+    selectedIds = new Set([...document.querySelectorAll('.row-select:checked')].map(item => Number(item.dataset.id)));
+    const rows = [...document.querySelectorAll('.row-select')];
+    const allSelected = rows.length > 0 && rows.every(item => item.checked);
+    selectAll.checked = allSelected;
+    deleteSelectedBtn.disabled = selectedIds.size === 0;
+}
+
 async function loadCandidates() {
     const keyword = document.getElementById("search").value.trim();
+    const paidFilter = document.getElementById("filterPaid").value;
     try {
-        const params = new URLSearchParams({ tuKhoa: keyword,
+        const params = new URLSearchParams({
+            tuKhoa: keyword,
             lop: document.getElementById("filterLop").value.trim(),
             nganhHoc: document.getElementById("filterNganh").value.trim(),
-            khoa: document.getElementById("filterKhoa").value.trim() });
+            khoa: document.getElementById("filterKhoa").value.trim()
+        });
+        if (paidFilter === "paid") params.set("daNop", "true");
+        if (paidFilter === "unpaid") params.set("daNop", "false");
         const list = await apiFetch(`/thisinh?${params}`);
         candidates = list;
         tbody.innerHTML = list.length ? list.map(x => `
-            <tr><td><strong>${x.maThiSinh}</strong></td><td>${x.hoTen}</td>
-            <td>${formatDate(x.ngaySinh)}</td><td>${x.lop || ""}</td>
-            <td>${x.nganhHoc || ""}</td><td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
-            <td>${x.emailCaNhan || ""}</td><td><button class="btn-sm btn-edit" onclick="editCandidate(${x.thiSinhId})">✏️ Sửa</button>
-            <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">🗑️ Xóa</button></td></tr>`).join("") :
-            `<tr><td colspan="8"><div class="empty">Chưa có thí sinh</div></td></tr>`;
+            <tr>
+                <td class="checkbox-col"><input class="row-select" type="checkbox" data-id="${x.thiSinhId}" ${selectedIds.has(x.thiSinhId) ? "checked" : ""}></td>
+                <td><strong>${x.maThiSinh}</strong></td><td>${x.hoTen}</td>
+                <td>${formatDate(x.ngaySinh)}</td><td>${x.lop || ""}</td>
+                <td>${x.nganhHoc || ""}</td><td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
+                <td>${x.emailCaNhan || ""}</td>
+                <td><button class="btn-sm btn-edit" onclick="editCandidate(${x.thiSinhId})">✏️ Sửa</button>
+                <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">🗑️ Xóa</button></td>
+            </tr>`).join("") :
+            `<tr><td colspan="9"><div class="empty">Chưa có thí sinh</div></td></tr>`;
+        syncSelectedRows();
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty">${error.message}</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty">${error.message}</div></td></tr>`;
     }
 }
 
@@ -41,7 +62,33 @@ document.getElementById("btnManual").onclick = () => {
 document.getElementById("btnImport").onclick = () => importModal.classList.remove("hidden");
 document.getElementById("btnCancelManual").onclick = () => manualModal.classList.add("hidden");
 document.getElementById("btnCancelImport").onclick = () => importModal.classList.add("hidden");
-document.querySelectorAll("#search, #filterLop, #filterNganh, #filterKhoa").forEach(input => input.oninput = loadCandidates);
+document.getElementById("btnRefreshFilters").onclick = () => {
+    document.getElementById("search").value = "";
+    document.getElementById("filterLop").value = "";
+    document.getElementById("filterNganh").value = "";
+    document.getElementById("filterKhoa").value = "";
+    document.getElementById("filterPaid").value = "";
+    selectedIds.clear();
+    loadCandidates();
+};
+document.getElementById("search").oninput = loadCandidates;
+document.getElementById("filterLop").oninput = loadCandidates;
+document.getElementById("filterNganh").oninput = loadCandidates;
+document.getElementById("filterKhoa").oninput = loadCandidates;
+document.getElementById("filterPaid").onchange = loadCandidates;
+
+tbody.addEventListener("change", (event) => {
+    if (event.target.matches(".row-select")) {
+        syncSelectedRows();
+    }
+});
+
+selectAll.addEventListener("change", (event) => {
+    const isChecked = event.target.checked;
+    document.querySelectorAll(".row-select").forEach(item => item.checked = isChecked);
+    syncSelectedRows();
+});
+
 window.editCandidate = id => {
     const candidate = candidates.find(x => x.thiSinhId === id);
     if (!candidate) return;
@@ -54,11 +101,32 @@ window.editCandidate = id => {
     document.getElementById("manualTitle").textContent = "Sửa thông tin thí sinh";
     manualModal.classList.remove("hidden");
 };
+
 window.deleteCandidate = async id => {
-    if (!confirm("Xóa thí sinh này? Thí sinh đã đăng ký thi sẽ không thể xóa.")) return;
+    const candidate = candidates.find(x => x.thiSinhId === id);
+    const label = candidate ? `${candidate.maThiSinh} - ${candidate.hoTen}` : "thí sinh này";
+    if (!confirm(`Bạn có chắc muốn xóa ${label}? Tất cả dữ liệu đăng ký liên quan của thí sinh này sẽ bị xóa khỏi cơ sở dữ liệu. Hành động này không thể hoàn tác.`)) return;
     try { await apiFetch(`/thisinh/${id}`, { method: "DELETE" }); toast("Đã xóa thí sinh", "success"); loadCandidates(); }
     catch (error) { toast("Không thể xóa: " + error.message, "error"); }
 };
+
+deleteSelectedBtn.onclick = async () => {
+    if (!selectedIds.size) return;
+    const selected = candidates.filter(item => selectedIds.has(item.thiSinhId));
+    const names = selected.map(item => `${item.maThiSinh} - ${item.hoTen}`).join("\n");
+    if (!confirm(`Bạn đang xóa ${selected.length} thí sinh đã chọn:\n${names}\n\nTất cả dữ liệu liên quan sẽ bị xóa khỏi cơ sở dữ liệu. Bạn có chắc chắn muốn tiếp tục?`)) return;
+    try {
+        for (const id of [...selectedIds]) {
+            await apiFetch(`/thisinh/${id}`, { method: "DELETE" });
+        }
+        selectedIds.clear();
+        toast(`Đã xóa ${selected.length} thí sinh`, "success");
+        loadCandidates();
+    } catch (error) {
+        toast("Không thể xóa các thí sinh đã chọn: " + error.message, "error");
+    }
+};
+
 document.getElementById("candidateForm").onsubmit = async event => {
     event.preventDefault();
     const value = id => document.getElementById(id).value.trim();

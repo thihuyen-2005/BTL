@@ -52,4 +52,12 @@ public class ExamSessionsController : ControllerBase
         await _svc.CancelAsync(id, CurrentUserId, ClientIp);
         return Ok(new { message = "Đã hủy ca thi." });
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _svc.DeleteAsync(id, CurrentUserId, ClientIp);
+        return NoContent();
+    }
 }

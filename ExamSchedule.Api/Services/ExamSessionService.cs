@@ -163,6 +163,25 @@ public class ExamSessionService
         await _statusUpdater.UpdateAllAsync();
     }
 
+    public async Task DeleteAsync(int id, int userId, string ip)
+    {
+        var ca = await _db.CaThis
+            .Include(c => c.ProctorAssignments)
+            .Include(c => c.DangKyThis)
+            .FirstOrDefaultAsync(c => c.CaThiId == id)
+            ?? throw new NotFoundException("Không tìm thấy ca thi.");
+
+        if (ca.ProctorAssignments.Count > 0)
+            _db.ProctorAssignments.RemoveRange(ca.ProctorAssignments);
+        if (ca.DangKyThis.Count > 0)
+            _db.DangKyThis.RemoveRange(ca.DangKyThis);
+
+        _db.CaThis.Remove(ca);
+        await _db.SaveChangesAsync();
+        await _audit.LogAsync(userId, "DELETE", "CA_THI", id, ca, null, ip);
+        await _statusUpdater.UpdateAllAsync();
+    }
+
     // ====== LOGIC KIỂM TRA XUNG ĐỘT (FR-EXAM-03) ======
     private async Task EnsureNoConflictAsync(int phongThiId, DateTime start, DateTime end, int ignoreId)
     {

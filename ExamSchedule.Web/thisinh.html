@@ -19,15 +19,24 @@
             <input id="filterLop" placeholder="Lọc theo lớp">
             <input id="filterNganh" placeholder="Lọc theo ngành">
             <input id="filterKhoa" placeholder="Lọc theo khoa">
+            <select id="filterPaid">
+                <option value="">Tất cả trạng thái nộp</option>
+                <option value="paid">Đã nộp 800.000</option>
+                <option value="unpaid">Chưa nộp</option>
+            </select>
             <div class="spacer"></div>
+            <button class="btn btn-ghost" id="btnRefreshFilters">↻ Làm mới</button>
             <button class="btn btn-primary" id="btnManual">➕ Thêm thí sinh</button>
             <button class="btn btn-primary" id="btnImport">📊 Nhập file Excel</button>
+            <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
-        <div class="card">
-            <table id="tblCandidates">
-                <thead><tr><th>Mã thí sinh</th><th>Họ và tên</th><th>Ngày sinh</th><th>Lớp</th><th>Ngành học</th><th>Số tiền</th><th>Email</th><th>Thao tác</th></tr></thead>
-                <tbody></tbody>
-            </table>
+        <div class="table-scroll">
+            <div class="card">
+                <table id="tblCandidates">
+                    <thead><tr><th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th><th>Mã thí sinh</th><th>Họ và tên</th><th>Ngày sinh</th><th>Lớp</th><th>Ngành học</th><th>Số tiền</th><th>Email</th><th>Thao tác</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
     <div id="manualModal" class="modal hidden">

@@ -38,6 +38,14 @@ public class ProctorsController : ControllerBase
     public async Task<IActionResult> Update(int proctorProfileId, [FromBody] UpdateProctorProfileRequest request)
         => Ok(await _service.UpdateProfileAsync(proctorProfileId, request, CurrentUserId, ClientIp));
 
+    [HttpDelete("{proctorProfileId:int}")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> Delete(int proctorProfileId)
+    {
+        await _service.DeleteProfileAsync(proctorProfileId, CurrentUserId, ClientIp);
+        return NoContent();
+    }
+
     [HttpGet("{proctorProfileId:int}/schedule")]
     public async Task<IActionResult> GetSchedule(int proctorProfileId)
     {

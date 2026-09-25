@@ -24,7 +24,8 @@
             </select>
             <div class="spacer"></div>
             <button class="btn btn-primary" id="btnAddProctor">＋ Thêm giám thị</button>
-            <button class="btn btn-primary" id="btnRefresh">↻ Làm mới</button>
+            <button class="btn btn-ghost" id="btnRefresh">↻ Làm mới</button>
+            <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
 
         <div class="toolbar" style="margin-top: 12px; margin-bottom: 16px;">
@@ -61,6 +62,7 @@
             <table id="tblProctors">
                 <thead>
                     <tr>
+                        <th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th>
                         <th>Mã cán bộ</th>
                         <th>Họ tên</th>
                         <th>Đơn vị</th>

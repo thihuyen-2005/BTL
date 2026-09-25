@@ -323,6 +323,50 @@ tbody tr { transition: background .12s; }
 tbody tr:hover { background: #fafbfd; }
 tbody tr:last-child td { border-bottom: none; }
 
+.checkbox-col {
+    width: 42px;
+    text-align: center;
+}
+.checkbox-col input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.table-scroll {
+    overflow: auto;
+    max-height: 72vh;
+    border-radius: var(--radius);
+    background: transparent;
+}
+.table-scroll .card {
+    overflow: visible;
+}
+.scroll-top-btn {
+    position: fixed;
+    right: 22px;
+    bottom: 24px;
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff;
+    font-size: 22px;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+    z-index: 120;
+}
+.scroll-top-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
 /* Empty state */
 .empty {
     text-align: center;

@@ -22,8 +22,8 @@ public class ThiSinhController : ControllerBase
     [HttpGet]
     [Authorize(Policy = "CanViewExam")]
     public async Task<IActionResult> GetAll([FromQuery] string? tuKhoa = null, [FromQuery] string? lop = null,
-        [FromQuery] string? nganhHoc = null, [FromQuery] string? khoa = null)
-        => Ok(await _service.GetAllAsync(tuKhoa, lop, nganhHoc, khoa));
+        [FromQuery] string? nganhHoc = null, [FromQuery] string? khoa = null, [FromQuery] bool? daNop = null)
+        => Ok(await _service.GetAllAsync(tuKhoa, lop, nganhHoc, khoa, daNop));
 
     [HttpPost]
     [Authorize(Policy = "CanManageExam")]

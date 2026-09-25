@@ -11,11 +11,17 @@ namespace ExamSchedule.Api.Services;
 
 public class ThiSinhService
 {
+    // Dữ liệu đang lưu trong DB là 800 cho trường hợp đã nộp, không phải 800000.
+    // Do đó rule đúng với database hiện tại phải là >= 800.
+    private const decimal MucNopToiThieu = 800m;
     private readonly AppDbContext _db;
 
     public ThiSinhService(AppDbContext db) => _db = db;
 
-    public async Task<List<ThiSinhResponseDto>> GetAllAsync(string? tuKhoa, string? lop, string? nganhHoc, string? khoa)
+    public static bool DaNop(decimal? soTien) => soTien.HasValue && soTien.Value >= MucNopToiThieu;
+    public static bool ChuaNop(decimal? soTien) => !soTien.HasValue || soTien.Value < MucNopToiThieu;
+
+    public async Task<List<ThiSinhResponseDto>> GetAllAsync(string? tuKhoa, string? lop, string? nganhHoc, string? khoa, bool? daNop = null)
     {
         var query = _db.ThiSinhs.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(tuKhoa))
@@ -23,6 +29,13 @@ public class ThiSinhService
         if (!string.IsNullOrWhiteSpace(lop)) query = query.Where(x => x.Lop == lop);
         if (!string.IsNullOrWhiteSpace(nganhHoc)) query = query.Where(x => x.NganhHoc == nganhHoc);
         if (!string.IsNullOrWhiteSpace(khoa)) query = query.Where(x => x.Khoa == khoa);
+        if (daNop.HasValue)
+        {
+            if (daNop.Value)
+                query = query.Where(x => x.SoTien.HasValue && x.SoTien.Value >= MucNopToiThieu);
+            else
+                query = query.Where(x => !x.SoTien.HasValue || x.SoTien.Value < MucNopToiThieu);
+        }
 
         return await query.OrderBy(x => x.HoTen)
             .Select(x => new ThiSinhResponseDto(
@@ -78,10 +91,20 @@ public class ThiSinhService
 
     public async Task DeleteAsync(int id)
     {
-        var candidate = await _db.ThiSinhs.FindAsync(id)
+        var candidate = await _db.ThiSinhs
+            .Include(x => x.DangKyThis)
+            .FirstOrDefaultAsync(x => x.ThiSinhId == id)
             ?? throw new NotFoundException("Không tìm thấy thí sinh.");
-        if (await _db.DangKyThis.AnyAsync(x => x.ThiSinhId == id))
-            throw new BusinessException("Không thể xóa thí sinh đã có đăng ký thi.");
+
+        if (candidate.DangKyThis.Count > 0)
+        {
+            var regIds = candidate.DangKyThis.Select(x => x.DangKyThiId).ToList();
+            var registrations = await _db.DangKyThis
+                .Where(x => regIds.Contains(x.DangKyThiId))
+                .ToListAsync();
+            _db.DangKyThis.RemoveRange(registrations);
+        }
+
         _db.ThiSinhs.Remove(candidate);
         await _db.SaveChangesAsync();
     }
@@ -152,7 +175,7 @@ public class ThiSinhService
         if (await _db.DangKyThis.AnyAsync(x => x.ThiSinhId == candidate.ThiSinhId && x.KyThiId == dto.KyThiId))
             throw new BusinessException("Thí sinh đã đăng ký kỳ thi này.");
 
-        var hasPaid = candidate.SoTien == 800000m;
+        var hasPaid = DaNop(candidate.SoTien);
         var registration = new DangKyThi
         {
             ThiSinhId = candidate.ThiSinhId,

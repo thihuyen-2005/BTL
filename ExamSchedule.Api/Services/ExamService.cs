@@ -114,12 +114,37 @@ public class ExamService
 
     public async Task DeleteAsync(int id, int userId, string ip)
     {
-        var kt = await _db.KyThis.Include(k => k.CaThis)
+        var kt = await _db.KyThis
+            .Include(k => k.CaThis)
+            .ThenInclude(c => c.ProctorAssignments)
+            .Include(k => k.CaThis)
+            .ThenInclude(c => c.DangKyThis)
             .FirstOrDefaultAsync(k => k.KyThiId == id)
             ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
 
-        if (kt.CaThis.Any())
-            throw new BusinessException("Không thể xóa: kỳ thi đã có ca thi.");
+        var caThiIds = kt.CaThis.Select(c => c.CaThiId).ToList();
+        if (caThiIds.Count > 0)
+        {
+            var caThiList = await _db.CaThis
+                .Where(c => caThiIds.Contains(c.CaThiId))
+                .Include(c => c.ProctorAssignments)
+                .Include(c => c.DangKyThis)
+                .ToListAsync();
+
+            foreach (var ca in caThiList)
+            {
+                if (ca.ProctorAssignments.Count > 0)
+                    _db.ProctorAssignments.RemoveRange(ca.ProctorAssignments);
+                if (ca.DangKyThis.Count > 0)
+                    _db.DangKyThis.RemoveRange(ca.DangKyThis);
+            }
+
+            _db.CaThis.RemoveRange(caThiList);
+        }
+
+        var registrations = await _db.DangKyThis.Where(d => d.KyThiId == id).ToListAsync();
+        if (registrations.Count > 0)
+            _db.DangKyThis.RemoveRange(registrations);
 
         _db.KyThis.Remove(kt);
         await _db.SaveChangesAsync();

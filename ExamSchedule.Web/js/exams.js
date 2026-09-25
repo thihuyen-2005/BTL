@@ -5,8 +5,19 @@ renderLayout("Quản lý Kỳ thi", "");
 const tbody = document.querySelector("#tblExams tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formExam");
+const selectAll = document.getElementById("selectAllRows");
+const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 let searchTimer;
 let loadRequestId = 0;
+let selectedExamIds = new Set();
+
+function syncSelectedRows() {
+    selectedExamIds = new Set([...document.querySelectorAll('.exam-row-select:checked')].map(item => Number(item.dataset.id)));
+    const rows = [...document.querySelectorAll('.exam-row-select')];
+    const allSelected = rows.length > 0 && rows.every(item => item.checked);
+    selectAll.checked = allSelected;
+    deleteSelectedBtn.disabled = selectedExamIds.size === 0;
+}
 
 async function loadExams() {
     const requestId = ++loadRequestId;
@@ -24,7 +35,7 @@ async function loadExams() {
 
         if (items.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="9">
+                <tr><td colspan="10">
                     <div class="empty">
                         <div class="icon">📭</div>
                         <div>Chưa có kỳ thi nào</div>
@@ -35,6 +46,7 @@ async function loadExams() {
 
         tbody.innerHTML = items.map(k => `
             <tr>
+                <td class="checkbox-col"><input class="exam-row-select" type="checkbox" data-id="${k.kyThiId}" ${selectedExamIds.has(k.kyThiId) ? "checked" : ""}></td>
                 <td>${k.kyThiId}</td>
                 <td><strong>${k.maKyThi}</strong></td>
                 <td>${k.tenKyThi}</td>
@@ -50,8 +62,9 @@ async function loadExams() {
                     </div>
                 </td>
             </tr>`).join("");
+        syncSelectedRows();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
     }
 }
 
@@ -97,13 +110,43 @@ window.editExam = async function(id) {
 };
 
 window.deleteExam = async function(id) {
-    if (!confirm("Bạn chắc chắn muốn xóa kỳ thi này?")) return;
     try {
+        const exam = await apiFetch(`/exams/${id}`);
+        const label = `${exam.maKyThi} - ${exam.tenKyThi}`;
+        if (!confirm(`Bạn có chắc muốn xóa ${label}? Mọi ca thi, lịch phân công và dữ liệu liên quan của kỳ thi này sẽ bị xóa khỏi cơ sở dữ liệu.`)) return;
         await apiFetch(`/exams/${id}`, { method: "DELETE" });
         toast("Đã xóa thành công!", "success");
         loadExams();
     } catch (e) {
         toast("Không thể xóa: " + e.message, "error");
+    }
+};
+
+selectAll.addEventListener("change", (event) => {
+    document.querySelectorAll(".exam-row-select").forEach(item => item.checked = event.target.checked);
+    syncSelectedRows();
+});
+
+tbody.addEventListener("change", (event) => {
+    if (event.target.matches(".exam-row-select")) {
+        syncSelectedRows();
+    }
+});
+
+deleteSelectedBtn.onclick = async () => {
+    if (!selectedExamIds.size) return;
+    const ids = [...selectedExamIds];
+    const labels = ids.map(id => `#${id}`).join("\n");
+    if (!confirm(`Bạn đang xóa ${ids.length} kỳ thi đã chọn:\n${labels}\n\nTất cả ca thi, thí sinh đăng ký và dữ liệu liên quan sẽ bị xóa khỏi cơ sở dữ liệu. Tiếp tục?`)) return;
+    try {
+        for (const id of ids) {
+            await apiFetch(`/exams/${id}`, { method: "DELETE" });
+        }
+        selectedExamIds.clear();
+        toast(`Đã xóa ${ids.length} kỳ thi`, "success");
+        loadExams();
+    } catch (error) {
+        toast("Không thể xóa các kỳ thi đã chọn: " + error.message, "error");
     }
 };
 

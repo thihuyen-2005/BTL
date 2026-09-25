@@ -10,8 +10,19 @@ renderLayout("Quản lý Ca thi", "");
 const tbody = document.querySelector("#tblSessions tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formSession");
+const selectAll = document.getElementById("selectAllRows");
+const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 let searchTimer;
 let editingSessionId = null;
+let selectedSessionIds = new Set();
+
+function syncSelectedRows() {
+    selectedSessionIds = new Set([...document.querySelectorAll('.session-row-select:checked')].map(item => Number(item.dataset.id)));
+    const rows = [...document.querySelectorAll('.session-row-select')];
+    const allSelected = rows.length > 0 && rows.every(item => item.checked);
+    selectAll.checked = allSelected;
+    deleteSelectedBtn.disabled = selectedSessionIds.size === 0;
+}
 
 document.getElementById("btnSchedule").onclick = async () => {
     if (!confirm("Xếp tự động các thí sinh chưa có ca thi? Lịch đã xếp sẽ được giữ nguyên.")) return;
@@ -41,7 +52,7 @@ async function loadSessions() {
 
         if (list.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="7">
+                <tr><td colspan="9">
                     <div class="empty">
                         <div class="icon">🕐</div>
                         <div>Chưa có ca thi nào</div>
@@ -52,6 +63,7 @@ async function loadSessions() {
 
         tbody.innerHTML = list.map(c => `
             <tr>
+                <td class="checkbox-col"><input class="session-row-select" type="checkbox" data-id="${c.caThiId}" ${selectedSessionIds.has(c.caThiId) ? "checked" : ""}></td>
                 <td>${c.caThiId}</td>
                 <td><strong>${c.maPhong}</strong></td>
                 <td>${formatDateTime(c.thoiGianBatDau)}</td>
@@ -62,12 +74,14 @@ async function loadSessions() {
                     <div class="actions-cell">
                         <a class="btn-sm btn-view" href="proctors.html?kyThiId=${kyThiId}&caThiId=${c.caThiId}">👤 Phân công</a>
                         <button class="btn-sm btn-edit" onclick="editSession(${c.caThiId})">✏️ Sửa</button>
-                        <button class="btn-sm btn-del" onclick="cancelSession(${c.caThiId})">🗑️ Hủy</button>
+                        <button class="btn-sm btn-del" onclick="deleteSession(${c.caThiId})">🗑️ Xóa</button>
+                        <button class="btn-sm btn-view" onclick="cancelSession(${c.caThiId})">⛔ Hủy</button>
                     </div>
                 </td>
             </tr>`).join("");
+        syncSelectedRows();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="icon">⚠️</div><div>${e.message}</div></div></td></tr>`;
     }
 }
 
@@ -147,13 +161,53 @@ window.editSession = async function (id) {
 };
 
 window.cancelSession = async function(id) {
-    if (!confirm("Bạn chắc chắn muốn hủy ca thi này?")) return;
+    if (!confirm("Bạn chắc chắn muốn hủy ca thi này? Lịch hủy này chỉ thay đổi trạng thái của ca thi, không xóa dữ liệu trong cơ sở dữ liệu.")) return;
     try {
         await apiFetch(`/exam-sessions/${id}/cancel`, { method: "PUT" });
         toast("Đã hủy ca thi!", "success");
         loadSessions();
     } catch (e) {
         toast("Lỗi: " + e.message, "error");
+    }
+};
+
+window.deleteSession = async function(id) {
+    const detail = (await apiFetch(`/exam-sessions?kyThiId=${kyThiId}`)).find(item => item.caThiId === id);
+    const label = detail ? `${detail.maPhong} (${formatDateTime(detail.thoiGianBatDau)} - ${formatDateTime(detail.thoiGianKetThuc)})` : `ca thi #${id}`;
+    if (!confirm(`Bạn có chắc muốn xóa ${label}? Mọi dữ liệu phân công và đăng ký trong ca thi này sẽ bị xóa khỏi cơ sở dữ liệu.`)) return;
+    try {
+        await apiFetch(`/exam-sessions/${id}`, { method: "DELETE" });
+        toast("Đã xóa ca thi", "success");
+        loadSessions();
+    } catch (e) {
+        toast("Không thể xóa ca thi: " + e.message, "error");
+    }
+};
+
+selectAll.addEventListener("change", (event) => {
+    document.querySelectorAll(".session-row-select").forEach(item => item.checked = event.target.checked);
+    syncSelectedRows();
+});
+
+tbody.addEventListener("change", (event) => {
+    if (event.target.matches(".session-row-select")) {
+        syncSelectedRows();
+    }
+});
+
+deleteSelectedBtn.onclick = async () => {
+    if (!selectedSessionIds.size) return;
+    const ids = [...selectedSessionIds];
+    if (!confirm(`Bạn đang xóa ${ids.length} ca thi đã chọn. Tất cả dữ liệu phân công và đăng ký của các ca thi này sẽ bị xóa khỏi cơ sở dữ liệu. Tiếp tục?`)) return;
+    try {
+        for (const id of ids) {
+            await apiFetch(`/exam-sessions/${id}`, { method: "DELETE" });
+        }
+        selectedSessionIds.clear();
+        toast(`Đã xóa ${ids.length} ca thi`, "success");
+        loadSessions();
+    } catch (error) {
+        toast("Không thể xóa các ca thi đã chọn: " + error.message, "error");
     }
 };
 

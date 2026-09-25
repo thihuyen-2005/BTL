@@ -7,6 +7,8 @@ const search = document.getElementById("search");
 const filterStatus = document.getElementById("filterStatus");
 const scheduleModal = document.getElementById("scheduleModal");
 const scheduleBody = document.getElementById("scheduleBody");
+const selectAll = document.getElementById("selectAllRows");
+const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 const qs = new URLSearchParams(location.search);
 const kyThiId = Number(qs.get("kyThiId"));
 const caThiId = Number(qs.get("caThiId"));
@@ -18,6 +20,15 @@ const proctorForm = document.getElementById("proctorForm");
 let candidates = [];
 let allProctors = [];
 let selectedCaThiId = Number.isInteger(caThiId) && caThiId > 0 ? caThiId : null;
+let selectedProctorIds = new Set();
+
+function syncSelectedRows() {
+    selectedProctorIds = new Set([...document.querySelectorAll('.proctor-row-select:checked')].map(item => Number(item.dataset.id)));
+    const rows = [...document.querySelectorAll('.proctor-row-select')];
+    const allSelected = rows.length > 0 && rows.every(item => item.checked);
+    selectAll.checked = allSelected;
+    deleteSelectedBtn.disabled = selectedProctorIds.size === 0;
+}
 
 async function loadExams() {
     const exams = await apiFetch("/exams");
@@ -141,6 +152,7 @@ function renderProctors() {
     }
     tbody.innerHTML = allProctors.map(proctor => `
         <tr>
+            <td class="checkbox-col"><input class="proctor-row-select" type="checkbox" data-id="${proctor.proctorProfileId}" ${selectedProctorIds.has(proctor.proctorProfileId) ? "checked" : ""}></td>
             <td><strong>${escapeHtml(proctor.staffCode)}</strong></td>
             <td>${escapeHtml(proctor.fullName)}</td>
             <td>${escapeHtml(proctor.department || "—")}</td>
@@ -151,11 +163,26 @@ function renderProctors() {
             <td>
                 <div class="actions-cell">
                     <button class="btn-sm btn-edit" onclick="editProctor(${proctor.proctorProfileId})">✏️ Sửa</button>
+                    <button class="btn-sm btn-del" onclick="deleteProctor(${proctor.proctorProfileId})">🗑️ Xóa</button>
                     <button class="btn-sm btn-view" onclick="showSchedule(${proctor.proctorProfileId}, '${escapeJs(proctor.fullName)}')">📅 Lịch</button>
                 </div>
             </td>
         </tr>`).join("");
+    syncSelectedRows();
 }
+
+window.deleteProctor = async function (proctorProfileId) {
+    const proctor = allProctors.find(p => p.proctorProfileId === proctorProfileId);
+    const label = proctor ? `${proctor.staffCode} - ${proctor.fullName}` : `giám thị #${proctorProfileId}`;
+    if (!confirm(`Bạn có chắc muốn xóa ${label}? Tất cả lịch phân công và dữ liệu liên quan của giám thị này sẽ bị xóa khỏi cơ sở dữ liệu.`)) return;
+    try {
+        await apiFetch(`/proctors/${proctorProfileId}`, { method: "DELETE" });
+        toast("Đã xóa giám thị", "success");
+        await loadProctors();
+    } catch (error) {
+        toast("Không thể xóa giám thị: " + error.message, "error");
+    }
+};
 
 window.editProctor = async function (proctorProfileId) {
     const proctor = allProctors.find(p => p.proctorProfileId === proctorProfileId);
@@ -266,13 +293,42 @@ document.getElementById("btnRefresh").onclick = async () => {
     if (Number.isInteger(kyThiId) && kyThiId > 0) {
         await loadExams();
     }
+    selectedProctorIds.clear();
     await loadProctors();
 };
+
+deleteSelectedBtn.onclick = async () => {
+    if (!selectedProctorIds.size) return;
+    const ids = [...selectedProctorIds];
+    const selected = allProctors.filter(item => selectedProctorIds.has(item.proctorProfileId));
+    const labels = selected.map(item => `${item.staffCode} - ${item.fullName}`).join("\n");
+    if (!confirm(`Bạn đang xóa ${selected.length} giám thị đã chọn:\n${labels}\n\nTất cả lịch phân công và dữ liệu liên quan sẽ bị xóa khỏi cơ sở dữ liệu. Tiếp tục?`)) return;
+    try {
+        for (const id of ids) {
+            await apiFetch(`/proctors/${id}`, { method: "DELETE" });
+        }
+        selectedProctorIds.clear();
+        toast(`Đã xóa ${selected.length} giám thị`, "success");
+        await loadProctors();
+    } catch (error) {
+        toast("Không thể xóa các giám thị đã chọn: " + error.message, "error");
+    }
+};
+
 document.getElementById("btnAssign").onclick = assignSelected;
 document.getElementById("btnAutoAssign").onclick = autoAssign;
 document.getElementById("closeSchedule").onclick = () => scheduleModal.classList.add("hidden");
 search.oninput = loadProctors;
 filterStatus.onchange = loadProctors;
+selectAll.addEventListener("change", (event) => {
+    document.querySelectorAll(".proctor-row-select").forEach(item => item.checked = event.target.checked);
+    syncSelectedRows();
+});
+tbody.addEventListener("change", (event) => {
+    if (event.target.matches(".proctor-row-select")) {
+        syncSelectedRows();
+    }
+});
 examSelect.onchange = async () => {
     const examId = Number(examSelect.value) || null;
     if (examId) {

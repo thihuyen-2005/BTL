@@ -28,12 +28,14 @@
                 </select>
             <div class="spacer"></div>
             <button class="btn btn-primary" id="btnAdd">➕ Thêm kỳ thi</button>
+            <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
 
         <div class="card">
             <table id="tblExams">
                 <thead>
                     <tr>
+                        <th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th>
                         <th style="width:60px;">ID</th>
                         <th>Mã</th>
                         <th>Tên kỳ thi</th>

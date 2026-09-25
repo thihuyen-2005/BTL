@@ -29,7 +29,7 @@ public class XepLichService
             .Where(x => x.KyThiId == kyThiId && x.TrangThai != TrangThaiCaThi.Dong && x.TrangThai != TrangThaiCaThi.Huy)
             .OrderBy(x => x.ThoiGianBatDau).ToListAsync();
 
-        foreach (var registration in registrations.Where(x => x.ThiSinh.SoTien != 800000m))
+        foreach (var registration in registrations.Where(x => !x.ThiSinh.SoTien.HasValue || x.ThiSinh.SoTien.Value < 800m))
         {
             registration.CaThiId = null;
             registration.CaThi = null;
@@ -45,7 +45,7 @@ public class XepLichService
             .Where(x => x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue)
             .ToListAsync();
 
-        foreach (var registration in registrations.Where(x => x.ThiSinh.SoTien == 800000m && x.CaThiId == null && x.TrangThai != TrangThaiDangKyThi.DaXep))
+        foreach (var registration in registrations.Where(x => x.ThiSinh.SoTien.HasValue && x.ThiSinh.SoTien.Value >= 800m && x.CaThiId == null && x.TrangThai != TrangThaiDangKyThi.DaXep))
         {
             var selected = sessions.FirstOrDefault(session =>
                 occupied.GetValueOrDefault(session.CaThiId) < session.SucChua &&

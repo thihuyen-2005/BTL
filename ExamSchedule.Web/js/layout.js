@@ -124,6 +124,28 @@ function renderLayout(pageTitle, pageSubtitle) {
         location.href = "index.html";
     };
 
+    // ===== Scroll to top button =====
+    const scrollBtn = document.getElementById("scrollTopBtn");
+    if (!scrollBtn) {
+        const btn = document.createElement("button");
+        btn.id = "scrollTopBtn";
+        btn.type = "button";
+        btn.className = "scroll-top-btn";
+        btn.setAttribute("aria-label", "Quay lên đầu trang");
+        btn.textContent = "↑";
+        btn.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+        document.body.appendChild(btn);
+    }
+    const updateScrollBtn = () => {
+        const button = document.getElementById("scrollTopBtn");
+        if (!button) return;
+        button.classList.toggle("visible", window.scrollY > 220);
+    };
+    updateScrollBtn();
+    window.removeEventListener("scroll", window.__scrollTopListener);
+    window.__scrollTopListener = () => updateScrollBtn();
+    window.addEventListener("scroll", window.__scrollTopListener, { passive: true });
+
     // ===== Sidebar toggle =====
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
