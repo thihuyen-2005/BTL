@@ -224,11 +224,34 @@ function getSchedulingEligibilityStatus(student) {
     return { label: "Chờ xếp lịch", className: "status-info" };
 }
 
+function isEligibleForScheduling(student) {
+    const amount = Number(student.soTien ?? 0);
+    return Number.isFinite(amount) && amount >= 800;
+}
+
 function openManualScheduleFromSelection() {
-    const selected = [...document.querySelectorAll('.row-select:checked')].map(item => Number(item.dataset.id)).filter(id => !Number.isNaN(id));
+    const selected = [...document.querySelectorAll('.row-select:checked')]
+        .map(item => Number(item.dataset.id))
+        .filter(id => !Number.isNaN(id));
+
+    const eligibleIds = selected
+        .filter(id => {
+            const student = candidates.find(item => item.thiSinhId === id);
+            return !!student && isEligibleForScheduling(student);
+        });
+
     const params = new URLSearchParams({ fromThiSinh: "1" });
-    if (selected.length > 0) {
-        params.set("selectedIds", selected.join(","));
+    if (eligibleIds.length > 0) {
+        params.set("selectedIds", eligibleIds.join(","));
+    }
+    window.location.href = `manual-schedule.html?${params.toString()}`;
+}
+
+function goToManualScheduleForStudent(studentId) {
+    const student = candidates.find(item => item.thiSinhId === studentId);
+    const params = new URLSearchParams({ fromThiSinh: "1" });
+    if (student && isEligibleForScheduling(student)) {
+        params.set("selectedIds", String(studentId));
     }
     window.location.href = `manual-schedule.html?${params.toString()}`;
 }

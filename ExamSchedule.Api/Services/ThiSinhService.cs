@@ -351,20 +351,13 @@ public class ThiSinhService
         return (await query.OrderBy(x => x.ThiSinh.HoTen).ToListAsync()).Select(ToRegistrationDto).ToList();
     }
 
-    public async Task<List<ThiSinhScheduleCandidateDto>> GetManualScheduleCandidatesAsync(int kyThiId, List<int>? selectedThiSinhIds = null)
+    public async Task<List<ThiSinhScheduleCandidateDto>> GetManualScheduleCandidatesAsync(int kyThiId)
     {
-        var query = _db.DangKyThis
+        var registrations = await _db.DangKyThis
             .Include(x => x.ThiSinh)
             .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
             .AsNoTracking()
-            .Where(x => x.KyThiId == kyThiId);
-
-        if (selectedThiSinhIds != null && selectedThiSinhIds.Count > 0)
-        {
-            query = query.Where(x => selectedThiSinhIds.Contains(x.ThiSinhId));
-        }
-
-        var registrations = await query
+            .Where(x => x.KyThiId == kyThiId)
             .OrderBy(x => x.ThiSinh.HoTen)
             .ThenBy(x => x.ThiSinhId)
             .ToListAsync();

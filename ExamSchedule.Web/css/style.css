@@ -922,10 +922,34 @@ label input:focus, label select:focus, label textarea:focus {
 
 .manual-schedule-main {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.manual-schedule-main > .toolbar {
+    order: 1;
+}
+
+.manual-schedule-main > .wide-result-table {
+    order: 2;
+}
+
+.manual-schedule-main > .summary-panel {
+    order: 3;
 }
 
 .compact-toolbar {
-    margin-bottom: 14px;
+    margin-bottom: 0;
+}
+
+.wide-result-table {
+    width: 100%;
+}
+
+.wide-result-table table {
+    width: 100%;
+    min-width: 100%;
 }
 
 .compact-toolbar input,
@@ -1004,7 +1028,7 @@ label input:focus, label select:focus, label textarea:focus {
 }
 
 .summary-scroll {
-    max-height: 280px;
+    max-height: 250px;
     overflow: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);

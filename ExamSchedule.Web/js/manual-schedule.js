@@ -93,23 +93,23 @@ function renderSessionSummary() {
 
 function renderSelectedSummary() {
     const selected = getSelectedCandidates();
-    const selectedExam = getSelectedExam();
     selectedCountBadge.textContent = String(selected.length);
 
     if (!selected.length) {
-        selectedTableBody.innerHTML = `<tr><td colspan="7" class="empty-cell">Chưa có thí sinh nào được chọn.</td></tr>`;
+        selectedTableBody.innerHTML = `<tr><td colspan="8" class="empty-cell">Chưa có thí sinh nào được chọn.</td></tr>`;
         return;
     }
 
-    const selectedSession = sessions.find((item) => String(item.caThiId) === sessionSelect.value);
     const summaryHtml = selected.map((candidate) => `
         <tr>
-            <td>${selectedExam ? (selectedExam.tenKyThi || selectedExam.maKyThi || "—") : "—"}</td>
-            <td>${candidate.caThiId ? `${candidate.maPhong || "—"}` : (selectedSession ? selectedSession.maPhong : "Chưa chọn")}</td>
             <td>${candidate.maThiSinh || "—"}</td>
             <td>${candidate.hoTen || "—"}</td>
             <td>${candidate.ngaySinh ? formatDateTime(candidate.ngaySinh) : "—"}</td>
             <td>${candidate.lop || "—"}</td>
+            <td>${candidate.khoa || "—"}</td>
+            <td>${candidate.nganhHoc || "—"}</td>
+            <td>${formatMoney(candidate.soTien)}</td>
+            <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
             <td>
                 <button class="btn btn-small btn-del" data-remove-id="${candidate.thiSinhId}" type="button">Bỏ xếp</button>
             </td>
@@ -291,20 +291,19 @@ async function loadCandidates() {
     }
 
     try {
-        const selectedQuery = parseSelectedIdsFromUrl();
         const query = new URLSearchParams({ kyThiId: String(examId) });
-        if (selectedQuery.length > 0) {
-            query.set("thiSinhIds", selectedQuery.join(","));
-        }
         const payload = await apiFetch(`/thisinh/schedule-candidates?${query.toString()}`);
-        let nextCandidates = extractItems(payload);
-        if (selectedQuery.length > 0) {
-            nextCandidates = nextCandidates.filter((candidate) => selectedQuery.includes(candidate.thiSinhId));
+        candidates = extractItems(payload);
+
+        const preselected = parseSelectedIdsFromUrl();
+        if (preselected.length > 0 && selectedIds.size === 0) {
+            selectedIds = new Set(preselected.filter((id) => candidates.some((candidate) => candidate.thiSinhId === id)));
         }
-        candidates = nextCandidates;
-        if (selectedQuery.length > 0 && selectedIds.size === 0) {
-            selectedIds = new Set(selectedQuery);
-        }
+
+        const legalIds = new Set(candidates.map((candidate) => candidate.thiSinhId));
+        [...selectedIds].forEach((id) => {
+            if (!legalIds.has(id)) selectedIds.delete(id);
+        });
     } catch (error) {
         candidates = [];
         toast(error.message || "Không thể tải danh sách thí sinh cho kỳ thi này.", "error");

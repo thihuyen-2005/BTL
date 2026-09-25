@@ -27,20 +27,8 @@ public class ThiSinhController : ControllerBase
 
     [HttpGet("schedule-candidates")]
     [Authorize(Policy = "CanManageExam")]
-    public async Task<IActionResult> GetScheduleCandidates([FromQuery] int kyThiId, [FromQuery] string? thiSinhIds = null)
-    {
-        List<int>? selectedIds = null;
-        if (!string.IsNullOrWhiteSpace(thiSinhIds))
-        {
-            selectedIds = thiSinhIds
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(int.Parse)
-                .Distinct()
-                .ToList();
-        }
-
-        return Ok(await _service.GetManualScheduleCandidatesAsync(kyThiId, selectedIds));
-    }
+    public async Task<IActionResult> GetScheduleCandidates([FromQuery] int kyThiId)
+        => Ok(await _service.GetManualScheduleCandidatesAsync(kyThiId));
 
     [HttpPost("manual-schedule")]
     [Authorize(Policy = "CanManageExam")]
