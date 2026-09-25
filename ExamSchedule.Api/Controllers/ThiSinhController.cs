@@ -25,6 +25,39 @@ public class ThiSinhController : ControllerBase
         [FromQuery] string? nganhHoc = null, [FromQuery] string? khoa = null, [FromQuery] bool? daNop = null)
         => Ok(await _service.GetAllAsync(tuKhoa, lop, nganhHoc, khoa, daNop));
 
+    [HttpGet("schedule-candidates")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> GetScheduleCandidates([FromQuery] int kyThiId, [FromQuery] string? thiSinhIds = null)
+    {
+        List<int>? selectedIds = null;
+        if (!string.IsNullOrWhiteSpace(thiSinhIds))
+        {
+            selectedIds = thiSinhIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(int.Parse)
+                .Distinct()
+                .ToList();
+        }
+
+        return Ok(await _service.GetManualScheduleCandidatesAsync(kyThiId, selectedIds));
+    }
+
+    [HttpPost("manual-schedule")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> CreateManualSchedule([FromBody] ManualScheduleRequestDto dto)
+    {
+        var result = await _service.AssignManualScheduleAsync(dto.KyThiId, dto.CaThiId, dto.ThiSinhIds ?? new List<int>());
+        return Ok(new { success = true, count = result.Count, items = result });
+    }
+
+    [HttpDelete("manual-schedule")]
+    [Authorize(Policy = "CanManageExam")]
+    public async Task<IActionResult> RemoveManualSchedule([FromQuery] int kyThiId, [FromQuery] int thiSinhId)
+    {
+        var result = await _service.RemoveManualScheduleAsync(kyThiId, thiSinhId);
+        return Ok(new { success = true, count = result.Count, items = result });
+    }
+
     [HttpPost]
     [Authorize(Policy = "CanManageExam")]
     public async Task<IActionResult> Create([FromBody] ThiSinhCreateDto dto)

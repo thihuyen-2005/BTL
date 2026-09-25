@@ -40,3 +40,26 @@ public record DangKyThiResponseDto(
 public record XepLichResponseDto(
     int KyThiId, int TongSoDangKy, int DaXep, int ChuaXep,
     List<DangKyThiResponseDto> ChiTiet);
+
+public record ManualScheduleRequestDto(
+    int KyThiId,
+    int CaThiId,
+    List<int> ThiSinhIds);
+
+public record ThiSinhScheduleCandidateDto(
+    int DangKyThiId,
+    int ThiSinhId,
+    string MaThiSinh,
+    string HoTen,
+    string? Lop,
+    string? Khoa,
+    string? NganhHoc,
+    decimal? SoTien,
+    string TrangThai,
+    string? LyDoChuaXep,
+    int? CaThiId,
+    DateTime? ThoiGianBatDau,
+    DateTime? ThoiGianKetThuc,
+    string? MaPhong,
+    bool CanSchedule,
+    string? EligibilityReason);

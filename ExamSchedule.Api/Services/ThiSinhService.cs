@@ -351,6 +351,110 @@ public class ThiSinhService
         return (await query.OrderBy(x => x.ThiSinh.HoTen).ToListAsync()).Select(ToRegistrationDto).ToList();
     }
 
+    public async Task<List<ThiSinhScheduleCandidateDto>> GetManualScheduleCandidatesAsync(int kyThiId, List<int>? selectedThiSinhIds = null)
+    {
+        var query = _db.DangKyThis
+            .Include(x => x.ThiSinh)
+            .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
+            .AsNoTracking()
+            .Where(x => x.KyThiId == kyThiId);
+
+        if (selectedThiSinhIds != null && selectedThiSinhIds.Count > 0)
+        {
+            query = query.Where(x => selectedThiSinhIds.Contains(x.ThiSinhId));
+        }
+
+        var registrations = await query
+            .OrderBy(x => x.ThiSinh.HoTen)
+            .ThenBy(x => x.ThiSinhId)
+            .ToListAsync();
+
+        return registrations.Select(x =>
+        {
+            var paid = x.ThiSinh.SoTien.HasValue && x.ThiSinh.SoTien.Value >= MucNopToiThieu;
+            var alreadyScheduled = x.CaThiId.HasValue && x.TrangThai == TrangThaiDangKyThi.DaXep;
+            var canSchedule = paid && !alreadyScheduled;
+            return new ThiSinhScheduleCandidateDto(
+                x.DangKyThiId,
+                x.ThiSinhId,
+                x.ThiSinh.MaThiSinh ?? "",
+                x.ThiSinh.HoTen ?? "",
+                x.ThiSinh.Lop,
+                x.ThiSinh.Khoa,
+                x.ThiSinh.NganhHoc,
+                x.ThiSinh.SoTien,
+                x.TrangThai.ToString(),
+                x.LyDoChuaXep,
+                x.CaThiId,
+                x.CaThi?.ThoiGianBatDau,
+                x.CaThi?.ThoiGianKetThuc,
+                x.CaThi?.PhongThi?.MaPhong,
+                canSchedule,
+                !paid ? "Chưa nộp đủ lệ phí 800.000 đồng" : alreadyScheduled ? "Đã có ca thi" : "Sẵn sàng xếp lịch");
+        }).ToList();
+    }
+
+    public async Task<List<ThiSinhScheduleCandidateDto>> AssignManualScheduleAsync(int kyThiId, int caThiId, List<int> thiSinhIds)
+    {
+        if (thiSinhIds == null || thiSinhIds.Count == 0)
+            return await GetManualScheduleCandidatesAsync(kyThiId);
+
+        var exam = await _db.KyThis.FindAsync(kyThiId)
+            ?? throw new NotFoundException("Không tìm thấy kỳ thi.");
+        if (exam.TrangThai is TrangThaiKyThi.KetThuc or TrangThaiKyThi.Huy)
+            throw new BusinessException("Kỳ thi đã kết thúc hoặc bị hủy.");
+
+        var session = await _db.CaThis.FirstOrDefaultAsync(x => x.CaThiId == caThiId && x.KyThiId == kyThiId)
+            ?? throw new NotFoundException("Không tìm thấy ca thi trong kỳ thi được chọn.");
+
+        var registrations = await _db.DangKyThis
+            .Include(x => x.ThiSinh)
+            .Where(x => x.KyThiId == kyThiId && thiSinhIds.Contains(x.ThiSinhId))
+            .ToListAsync();
+
+        if (registrations.Count != thiSinhIds.Distinct().Count())
+            throw new BusinessException("Một số thí sinh không thuộc kỳ thi được chọn.");
+
+        var currentOccupied = await _db.DangKyThis.CountAsync(x => x.CaThiId == caThiId && x.TrangThai == TrangThaiDangKyThi.DaXep && x.KyThiId == kyThiId);
+        var incomingCount = thiSinhIds.Distinct().Count();
+        if (currentOccupied + incomingCount > session.SucChua)
+            throw new BusinessException($"Ca thi đã đầy. Sức chứa hiện tại: {session.SucChua}; còn {session.SucChua - currentOccupied} chỗ.");
+
+        foreach (var registration in registrations)
+        {
+            if (!registration.ThiSinh.SoTien.HasValue || registration.ThiSinh.SoTien.Value < MucNopToiThieu)
+                throw new BusinessException($"Thí sinh {registration.ThiSinh.HoTen} chưa nộp đủ lệ phí 800.000 đồng.");
+
+            registration.CaThiId = caThiId;
+            registration.TrangThai = TrangThaiDangKyThi.DaXep;
+            registration.LyDoChuaXep = null;
+            registration.NgayCapNhat = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+        return await GetManualScheduleCandidatesAsync(kyThiId);
+    }
+
+    public async Task<List<ThiSinhScheduleCandidateDto>> RemoveManualScheduleAsync(int kyThiId, int thiSinhId)
+    {
+        var registration = await _db.DangKyThis
+            .Include(x => x.ThiSinh)
+            .FirstOrDefaultAsync(x => x.KyThiId == kyThiId && x.ThiSinhId == thiSinhId)
+            ?? throw new NotFoundException("Không tìm thấy đăng ký thí sinh trong kỳ thi này.");
+
+        registration.CaThiId = null;
+        registration.TrangThai = registration.ThiSinh.SoTien.HasValue && registration.ThiSinh.SoTien.Value >= MucNopToiThieu
+            ? TrangThaiDangKyThi.ChoXep
+            : TrangThaiDangKyThi.ChuaXep;
+        registration.LyDoChuaXep = (registration.ThiSinh.SoTien.HasValue && registration.ThiSinh.SoTien.Value >= MucNopToiThieu)
+            ? null
+            : "Chưa nộp đủ lệ phí 800.000 đồng.";
+        registration.NgayCapNhat = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return await GetManualScheduleCandidatesAsync(kyThiId);
+    }
+
     private async Task LoadRegistrationAsync(DangKyThi registration)
     {
         await _db.Entry(registration).Reference(x => x.ThiSinh).LoadAsync();

@@ -10,8 +10,8 @@ const MENU = [
             roles: ["Admin", "CBKT", "QuanLy"] },
     { href: "proctors.html",        icon: "👤", label: "Giám thị",         active: "proctors",
       roles: ["Admin", "CBKT"] },
-    { href: "#",                    icon: "🗓️", label: "Xếp lịch tự động", disabled: true, tag: "Sắp có",
-      roles: ["Admin", "CBKT"] },
+    { href: "manual-schedule.html", icon: "🗓️", label: "Xếp lịch thủ công", active: "manual-schedule",
+      roles: ["Admin", "CBKT", "QuanLy"] },
 
     { section: "Quản trị" },
     { href: "users.html",           icon: "👥", label: "Người dùng",       active: "users",

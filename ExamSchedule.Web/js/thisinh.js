@@ -199,20 +199,45 @@ async function loadCandidates() {
                 <td>${x.khoa || ""}</td>
                 <td>${x.nganhHoc || ""}</td>
                 <td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
+                <td><span class="schedule-status ${getSchedulingEligibilityStatus(x).className}">${getSchedulingEligibilityStatus(x).label}</span></td>
                 <td>${x.emailCaNhan || ""}</td>
                 <td class="sticky-action">
                     <div class="actions-cell">
+                        <button class="btn-sm btn-view" onclick="goToManualScheduleForStudent(${x.thiSinhId})">Xếp lịch</button>
                         <button class="btn-sm btn-edit" onclick="editCandidate(${x.thiSinhId})">Sửa</button>
                         <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">Xóa</button>
                     </div>
                 </td>
             </tr>`).join("") :
-            `<tr><td colspan="16"><div class="empty">Chưa có thí sinh</div></td></tr>`;
+            `<tr><td colspan="17"><div class="empty">Chưa có thí sinh</div></td></tr>`;
         syncSelectedRows();
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="16"><div class="empty">${error.message}</div></td></tr>`;
     }
 }
+
+function getSchedulingEligibilityStatus(student) {
+    const amount = Number(student.soTien ?? 0);
+    if (!student.soTien || Number.isNaN(amount) || amount < 800) {
+        return { label: "Chưa đủ điều kiện xếp lịch", className: "status-warning" };
+    }
+    return { label: "Chờ xếp lịch", className: "status-info" };
+}
+
+function openManualScheduleFromSelection() {
+    const selected = [...document.querySelectorAll('.row-select:checked')].map(item => Number(item.dataset.id)).filter(id => !Number.isNaN(id));
+    const params = new URLSearchParams({ fromThiSinh: "1" });
+    if (selected.length > 0) {
+        params.set("selectedIds", selected.join(","));
+    }
+    window.location.href = `manual-schedule.html?${params.toString()}`;
+}
+
+function goToManualScheduleForStudent(studentId) {
+    window.location.href = `manual-schedule.html?selectedIds=${studentId}&fromThiSinh=1`;
+}
+
+document.getElementById("btnManualSchedule").onclick = openManualScheduleFromSelection;
 
 document.getElementById("btnManual").onclick = () => {
     document.getElementById("candidateForm").reset();

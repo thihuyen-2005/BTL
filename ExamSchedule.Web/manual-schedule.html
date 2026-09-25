@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xếp lịch thủ công</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="page-header">
+            <div>
+                <div class="title">Xếp lịch thủ công</div>
+                <div class="subtitle">Chọn kỳ thi, ca thi và thí sinh để phân bổ lịch thi theo đúng điều kiện đã đóng tiền và chưa có ca.</div>
+            </div>
+        </div>
+
+        <div class="manual-schedule-shell">
+            <aside class="manual-schedule-sidebar card">
+                <h3>Thông tin xếp lịch</h3>
+
+                <label class="field-label">
+                    Kỳ thi
+                    <select id="examSelect">
+                        <option value="">Chọn kỳ thi</option>
+                    </select>
+                </label>
+
+                <label class="field-label">
+                    Ca thi
+                    <select id="sessionSelect">
+                        <option value="">Chọn ca thi</option>
+                    </select>
+                </label>
+
+                <div id="sessionSummary" class="session-summary empty">
+                    Chưa chọn ca thi.
+                </div>
+
+                <div class="manual-actions">
+                    <button class="btn btn-primary" id="assignSelectedBtn">Xếp lịch đã chọn</button>
+                    <button class="btn btn-ghost" id="clearSelectionBtn" type="button">Bỏ chọn</button>
+                    <button class="btn btn-secondary" id="autoScheduleBtn" type="button">Xếp tự động</button>
+                </div>
+            </aside>
+
+            <section class="manual-schedule-main">
+                <div class="toolbar compact-toolbar">
+                    <input id="candidateSearch" placeholder="🔍 Tìm theo mã, họ tên, lớp hoặc khoa">
+                    <select id="statusFilter">
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="eligible">Sẵn sàng xếp</option>
+                        <option value="already-scheduled">Đã có ca thi</option>
+                        <option value="unpaid">Chưa nộp</option>
+                    </select>
+                    <button class="btn btn-ghost" id="refreshBtn" type="button">↻ Làm mới</button>
+                </div>
+
+                <div class="table-scroll">
+                    <div class="card table-card">
+                        <table id="manualScheduleTable">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-col"><input type="checkbox" id="selectAllRows"></th>
+                                    <th>Mã TS</th>
+                                    <th>Họ và tên</th>
+                                    <th>Lớp</th>
+                                    <th>Khoa</th>
+                                    <th>Ngành</th>
+                                    <th>Học phí</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ca thi</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="summary-panel card">
+                    <div class="summary-header">
+                        <h3>Thông tin đã chọn để xếp</h3>
+                        <span id="selectedCountBadge" class="badge-count">0</span>
+                    </div>
+                    <div class="summary-scroll">
+                        <table id="selectedTable">
+                            <thead>
+                                <tr>
+                                    <th>Kỳ thi</th>
+                                    <th>Ca thi</th>
+                                    <th>Mã TS</th>
+                                    <th>Họ tên</th>
+                                    <th>Ngày sinh</th>
+                                    <th>Tên lớp</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="empty-cell">Chưa có thí sinh nào được chọn.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="js/api.js?v=20260925-1"></script>
+    <script src="js/layout.js?v=20260925-1"></script>
+    <script src="js/manual-schedule.js?v=20260925-1"></script>
+</body>
+</html>
