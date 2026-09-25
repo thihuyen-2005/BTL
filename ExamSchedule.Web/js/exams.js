@@ -54,7 +54,7 @@ async function loadExams() {
                 <td>${formatDate(k.thoiGianKetThucDk)}</td>
                 <td><span class="badge ${k.trangThai}">${trangThaiLabel(k.trangThai)}</span></td>
                 <td>${k.soCaThi || 0}</td>
-                <td>
+                <td class="sticky-action">
                     <div class="actions-cell">
                         <button class="btn-sm btn-edit" onclick="editExam(${k.kyThiId})">✏️ Sửa</button>
                         <button class="btn-sm btn-del" onclick="deleteExam(${k.kyThiId})">🗑️ Xóa</button>

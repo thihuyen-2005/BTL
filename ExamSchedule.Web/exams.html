@@ -31,23 +31,25 @@
             <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
 
-        <div class="card">
-            <table id="tblExams">
-                <thead>
-                    <tr>
-                        <th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th>
-                        <th style="width:60px;">ID</th>
-                        <th>Mã</th>
-                        <th>Tên kỳ thi</th>
-                        <th>Bắt đầu ĐK</th>
-                        <th>Kết thúc ĐK</th>
-                        <th>Trạng thái</th>
-                        <th style="width:70px;">Số ca</th>
-                        <th style="width:230px;">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="table-scroll">
+            <div class="card table-card">
+                <table id="tblExams">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th>
+                            <th style="width:60px;">ID</th>
+                            <th>Mã</th>
+                            <th>Tên kỳ thi</th>
+                            <th>Bắt đầu ĐK</th>
+                            <th>Kết thúc ĐK</th>
+                            <th>Trạng thái</th>
+                            <th style="width:70px;">Số ca</th>
+                            <th class="sticky-action" style="width:260px;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
