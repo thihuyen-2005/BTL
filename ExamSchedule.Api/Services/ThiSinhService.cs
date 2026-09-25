@@ -41,12 +41,7 @@ public class ThiSinhService
         if (!string.IsNullOrWhiteSpace(lop)) query = query.Where(x => x.Lop == lop);
 
         var normalizedKhoa = AcademicCatalog.NormalizeKhoa(khoa);
-        if (!string.IsNullOrWhiteSpace(normalizedKhoa))
-            query = query.Where(x => x.Khoa == normalizedKhoa || AcademicCatalog.NormalizeKhoa(x.Khoa) == normalizedKhoa);
-
         var normalizedNganh = AcademicCatalog.NormalizeNganhHoc(normalizedKhoa, nganhHoc);
-        if (!string.IsNullOrWhiteSpace(normalizedNganh))
-            query = query.Where(x => x.NganhHoc == normalizedNganh || AcademicCatalog.NormalizeNganhHoc(x.Khoa, x.NganhHoc) == normalizedNganh);
 
         if (daNop.HasValue)
         {
@@ -57,6 +52,16 @@ public class ThiSinhService
         }
 
         var items = await query.ToListAsync();
+        if (!string.IsNullOrWhiteSpace(normalizedKhoa))
+            items = items
+                .Where(x => x.Khoa == normalizedKhoa || AcademicCatalog.NormalizeKhoa(x.Khoa) == normalizedKhoa)
+                .ToList();
+
+        if (!string.IsNullOrWhiteSpace(normalizedNganh))
+            items = items
+                .Where(x => x.NganhHoc == normalizedNganh || AcademicCatalog.NormalizeNganhHoc(x.Khoa, x.NganhHoc) == normalizedNganh)
+                .ToList();
+
         return items
             .OrderBy(x => RemoveDiacritics(x.HoTen ?? string.Empty))
             .ThenBy(x => x.HoTen ?? string.Empty, StringComparer.OrdinalIgnoreCase)
