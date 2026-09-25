@@ -71,7 +71,7 @@ namespace ExamSchedule.Api.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("app_users", (string)null);
+                    b.ToTable("nguoi_dung", (string)null);
                 });
 
             modelBuilder.Entity("ExamSchedule.Api.Entities.AuditLog", b =>
@@ -120,7 +120,7 @@ namespace ExamSchedule.Api.Migrations
 
                     b.HasKey("AuditId");
 
-                    b.ToTable("audit_log", (string)null);
+                    b.ToTable("nhat_ky", (string)null);
                 });
 
             modelBuilder.Entity("ExamSchedule.Api.Entities.CaThi", b =>
@@ -455,7 +455,7 @@ namespace ExamSchedule.Api.Migrations
                     b.HasIndex("RoleName")
                         .IsUnique();
 
-                    b.ToTable("roles", (string)null);
+                    b.ToTable("vai_tro", (string)null);
                 });
 
             modelBuilder.Entity("ExamSchedule.Api.Entities.ThiSinh", b =>
@@ -548,6 +548,9 @@ namespace ExamSchedule.Api.Migrations
                     b.HasIndex("SoCccdHoChieu")
                         .IsUnique();
 
+                    b.HasIndex("SoDienThoai")
+                        .IsUnique();
+
                     b.ToTable("thisinh", (string)null);
                 });
 
@@ -565,7 +568,7 @@ namespace ExamSchedule.Api.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("user_roles", (string)null);
+                    b.ToTable("nguoi_dung_vai_tro", (string)null);
                 });
 
             modelBuilder.Entity("ExamSchedule.Api.Entities.CaThi", b =>

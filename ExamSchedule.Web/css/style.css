@@ -307,12 +307,14 @@ a:hover { color: var(--primary-h); }
 table {
     width: 100%; border-collapse: collapse;
     background: var(--card);
+    min-width: 1700px;
 }
 th, td {
     padding: 13px 16px;
     text-align: left;
     font-size: 13.5px;
     border-bottom: 1px solid var(--border);
+    white-space: nowrap;
 }
 th {
     background: var(--bg-2);
@@ -334,13 +336,39 @@ tbody tr:last-child td { border-bottom: none; }
     cursor: pointer;
 }
 .table-scroll {
-    overflow: auto;
+    overflow-x: auto;
+    max-width: 100%;
     max-height: 72vh;
     border-radius: var(--radius);
     background: transparent;
 }
 .table-scroll .card {
     overflow: visible;
+}
+.table-card {
+    min-width: max-content;
+}
+.th-sticky,
+.sticky-action {
+    position: sticky;
+    right: 0;
+    background: var(--card);
+    z-index: 3;
+    box-shadow: -2px 0 0 var(--border);
+}
+thead .sticky-action {
+    background: var(--bg-2);
+    z-index: 4;
+}
+tbody tr:hover .sticky-action,
+tbody tr:hover td.sticky-action {
+    background: #fafbfd;
+}
+.sticky-action .actions-cell {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-start;
 }
 .scroll-top-btn {
     position: fixed;

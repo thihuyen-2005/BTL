@@ -6,6 +6,7 @@ using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ExamSchedule.Api.Services;
 
@@ -14,6 +15,14 @@ public class ThiSinhService
     // Dữ liệu đang lưu trong DB là 800 cho trường hợp đã nộp, không phải 800000.
     // Do đó rule đúng với database hiện tại phải là >= 800.
     private const decimal MucNopToiThieu = 800m;
+    private static readonly string[] DefaultPhonePool =
+    {
+        "0399480863", "0817707295", "0969868573", "0374151236", "0978228605",
+        "0855934189", "0325673402", "0707246208", "0326893801", "0397262094",
+        "0376605012", "0395328102", "0328729735", "0344470600", "0369372956",
+        "0332010640", "0357650284", "0389723143", "0362565854", "0367694963",
+        "0869010933", "0989229926"
+    };
     private readonly AppDbContext _db;
 
     public ThiSinhService(AppDbContext db) => _db = db;
@@ -25,7 +34,10 @@ public class ThiSinhService
     {
         var query = _db.ThiSinhs.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(tuKhoa))
-            query = query.Where(x => x.MaThiSinh.Contains(tuKhoa) || x.HoTen.Contains(tuKhoa));
+            query = query.Where(x =>
+                (x.MaThiSinh != null && x.MaThiSinh.Contains(tuKhoa)) ||
+                (x.HoTen != null && x.HoTen.Contains(tuKhoa)) ||
+                (x.NganhHoc != null && x.NganhHoc.Contains(tuKhoa)));
         if (!string.IsNullOrWhiteSpace(lop)) query = query.Where(x => x.Lop == lop);
 
         var normalizedKhoa = AcademicCatalog.NormalizeKhoa(khoa);
@@ -44,12 +56,15 @@ public class ThiSinhService
                 query = query.Where(x => !x.SoTien.HasValue || x.SoTien.Value < MucNopToiThieu);
         }
 
-        return await query.OrderBy(x => x.HoTen)
+        var items = await query.ToListAsync();
+        return items
+            .OrderBy(x => RemoveDiacritics(x.HoTen ?? string.Empty))
+            .ThenBy(x => x.HoTen ?? string.Empty, StringComparer.OrdinalIgnoreCase)
             .Select(x => new ThiSinhResponseDto(
                 x.ThiSinhId, x.MaThiSinh, x.HoTen, x.NgaySinh, x.GioiTinh,
                 x.DanToc, x.NoiSinh, x.QuocTich, x.SoCccdHoChieu,
                 x.SoDienThoai, x.Lop, x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan))
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<int> ImportAsync(IEnumerable<ThiSinhImportDto> items)
@@ -74,13 +89,105 @@ public class ThiSinhService
         return imported;
     }
 
+    public async Task NormalizeDataIntegrityAsync()
+    {
+        var candidates = await _db.ThiSinhs.OrderBy(x => x.ThiSinhId).ToListAsync();
+        var usedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var assignedCodeIndex = 1;
+
+        foreach (var candidate in candidates)
+        {
+            while (usedCodes.Contains($"TS{assignedCodeIndex:D4}", StringComparer.OrdinalIgnoreCase))
+                assignedCodeIndex++;
+
+            var normalizedCode = $"TS{assignedCodeIndex:D4}";
+            if (!string.Equals(candidate.MaThiSinh, normalizedCode, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"[ThiSinhIntegrity] Đổi mã thí sinh {candidate.MaThiSinh} -> {normalizedCode}; ThiSinhId={candidate.ThiSinhId}");
+                candidate.MaThiSinh = normalizedCode;
+            }
+
+            usedCodes.Add(candidate.MaThiSinh);
+            assignedCodeIndex++;
+        }
+
+        var usedPhones = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var candidate in candidates)
+        {
+            var phone = NormalizePhoneNumber(candidate.SoDienThoai);
+            if (!string.IsNullOrWhiteSpace(phone) && IsValidPhoneNumber(phone))
+                usedPhones.Add(phone);
+        }
+
+        foreach (var candidate in candidates)
+        {
+            var phone = NormalizePhoneNumber(candidate.SoDienThoai);
+            if (string.IsNullOrWhiteSpace(phone) || !IsValidPhoneNumber(phone))
+            {
+                var fallback = GetNextAvailablePhoneNumber(usedPhones, DefaultPhonePool);
+                if (!string.IsNullOrWhiteSpace(fallback))
+                {
+                    candidate.SoDienThoai = fallback;
+                    usedPhones.Add(fallback);
+                    Console.WriteLine($"[ThiSinhIntegrity] Gán số điện thoại {fallback} cho ThiSinhId={candidate.ThiSinhId}");
+                }
+            }
+            else
+            {
+                candidate.SoDienThoai = phone;
+                usedPhones.Add(phone);
+            }
+
+            if (string.IsNullOrWhiteSpace(candidate.HoTen))
+            {
+                candidate.HoTen = $"Thí sinh {candidate.ThiSinhId}";
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung họ tên cho ThiSinhId={candidate.ThiSinhId}");
+            }
+            if (!candidate.NgaySinh.HasValue)
+            {
+                candidate.NgaySinh = new DateTime(1998, 1, 1);
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung ngày sinh cho ThiSinhId={candidate.ThiSinhId}");
+            }
+            if (string.IsNullOrWhiteSpace(candidate.GioiTinh))
+            {
+                candidate.GioiTinh = "Khác";
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung giới tính cho ThiSinhId={candidate.ThiSinhId}");
+            }
+            if (string.IsNullOrWhiteSpace(candidate.Lop))
+            {
+                candidate.Lop = "Chưa cập nhật";
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung lớp cho ThiSinhId={candidate.ThiSinhId}");
+            }
+            if (string.IsNullOrWhiteSpace(candidate.Khoa))
+            {
+                candidate.Khoa = "Chưa cập nhật";
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung khoa cho ThiSinhId={candidate.ThiSinhId}");
+            }
+            if (string.IsNullOrWhiteSpace(candidate.NganhHoc))
+            {
+                candidate.NganhHoc = "Chưa cập nhật";
+                Console.WriteLine($"[ThiSinhIntegrity] Bổ sung ngành học cho ThiSinhId={candidate.ThiSinhId}");
+            }
+        }
+
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<ThiSinhResponseDto> CreateAsync(ThiSinhCreateDto dto)
     {
+        dto = dto with
+        {
+            MaThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh) ? null : NormalizeCode(dto.MaThiSinh.Trim()),
+            SoDienThoai = NormalizePhoneNumber(dto.SoDienThoai)
+        };
+
         ValidateRequiredFields(dto);
+
+        await EnsureUniquePhoneNumberAsync(dto.SoDienThoai, null);
 
         var maThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh)
             ? await GenerateNewMaThiSinhAsync()
-            : NormalizeCode(dto.MaThiSinh.Trim());
+            : NormalizeDisplayCode(dto.MaThiSinh);
 
         if (await _db.ThiSinhs.AnyAsync(x => x.MaThiSinh == maThiSinh))
             throw new BusinessException("Mã thí sinh đã tồn tại.");
@@ -94,6 +201,12 @@ public class ThiSinhService
 
     public async Task<ThiSinhResponseDto> UpdateAsync(int id, ThiSinhUpdateDto dto)
     {
+        dto = dto with
+        {
+            MaThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh) ? null : NormalizeCode(dto.MaThiSinh.Trim()),
+            SoDienThoai = NormalizePhoneNumber(dto.SoDienThoai)
+        };
+
         ValidateRequiredFields(dto);
 
         var candidate = await _db.ThiSinhs.FindAsync(id)
@@ -101,10 +214,12 @@ public class ThiSinhService
 
         var normalizedMaThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh)
             ? candidate.MaThiSinh
-            : NormalizeCode(dto.MaThiSinh.Trim());
+            : NormalizeDisplayCode(dto.MaThiSinh.Trim());
 
         if (await _db.ThiSinhs.AnyAsync(x => x.ThiSinhId != id && x.MaThiSinh == normalizedMaThiSinh))
             throw new BusinessException("Mã thí sinh đã tồn tại.");
+
+        await EnsureUniquePhoneNumberAsync(dto.SoDienThoai, id);
 
         dto = dto with { MaThiSinh = normalizedMaThiSinh };
         Apply(candidate, dto);
@@ -230,19 +345,40 @@ public class ThiSinhService
 
     private async Task<string> GenerateNewMaThiSinhAsync()
     {
-        var last = await _db.ThiSinhs.AsNoTracking()
-            .Where(x => x.MaThiSinh.StartsWith("TS-"))
-            .OrderByDescending(x => x.ThiSinhId)
+        var codes = await _db.ThiSinhs.AsNoTracking()
+            .Where(x => !string.IsNullOrWhiteSpace(x.MaThiSinh) && x.MaThiSinh.StartsWith("TS", StringComparison.OrdinalIgnoreCase))
             .Select(x => x.MaThiSinh)
-            .FirstOrDefaultAsync();
+            .ToListAsync();
 
-        if (string.IsNullOrWhiteSpace(last)) return "TS-0001";
+        var maxNumber = 0;
+        foreach (var code in codes)
+        {
+            var digits = Regex.Replace(code, "\\D", "");
+            if (digits.Length == 4 && int.TryParse(digits, out var n))
+                maxNumber = Math.Max(maxNumber, n);
+        }
 
-        var suffix = last[3..];
-        if (int.TryParse(suffix, out var number))
-            return $"TS-{number + 1:0000}";
+        if (maxNumber >= 9999)
+            throw new BusinessException("Đã đạt giới hạn mã thí sinh TS9999. Không thể tạo thêm mã mới.");
 
-        return $"TS-{DateTime.UtcNow:yyyyMMddHHmmss}";
+        return $"TS{maxNumber + 1:D4}";
+    }
+
+    private async Task EnsureUniquePhoneNumberAsync(string? phone, int? ignoreId)
+    {
+        var normalizedPhone = NormalizePhoneNumber(phone);
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+            throw new BusinessException("Số điện thoại không được để trống.");
+        if (!IsValidPhoneNumber(normalizedPhone))
+            throw new BusinessException("Số điện thoại không hợp lệ. Phải đúng 10 số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.");
+
+        var hasDuplicate = await _db.ThiSinhs.AnyAsync(x =>
+            x.ThiSinhId != (ignoreId ?? -1) &&
+            !string.IsNullOrWhiteSpace(x.SoDienThoai) &&
+            x.SoDienThoai == normalizedPhone);
+
+        if (hasDuplicate)
+            throw new BusinessException("Số điện thoại đã tồn tại trong hệ thống.");
     }
 
     private static void ValidateRequiredFields(ThiSinhImportDto dto)
@@ -252,12 +388,10 @@ public class ThiSinhService
         if (string.IsNullOrWhiteSpace(dto.HoTen)) missing.Add("Họ và tên");
         if (!dto.NgaySinh.HasValue) missing.Add("Ngày sinh");
         if (string.IsNullOrWhiteSpace(dto.GioiTinh)) missing.Add("Giới tính");
-        if (string.IsNullOrWhiteSpace(dto.SoCccdHoChieu)) missing.Add("Số CCCD/Hộ chiếu");
         if (string.IsNullOrWhiteSpace(dto.SoDienThoai)) missing.Add("Số điện thoại");
         if (string.IsNullOrWhiteSpace(dto.Lop)) missing.Add("Lớp");
         if (string.IsNullOrWhiteSpace(dto.NganhHoc)) missing.Add("Ngành học");
         if (string.IsNullOrWhiteSpace(dto.Khoa)) missing.Add("Khoa");
-        if (dto.SoTien is null) missing.Add("Tình trạng học phí");
 
         if (missing.Count > 0)
             throw new BusinessException($"Thiếu thông tin bắt buộc: {string.Join(", ", missing)}.");
@@ -271,7 +405,94 @@ public class ThiSinhService
     private static string NormalizeCode(string? code)
     {
         var value = (code ?? string.Empty).Trim();
-        return int.TryParse(value, out var ordinal) ? $"TS-{ordinal:0000}" : value;
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var digitsOnly = Regex.Replace(value, "\\D", "");
+        if (string.IsNullOrWhiteSpace(digitsOnly)) return value;
+
+        var lastFour = digitsOnly.Length > 4 ? digitsOnly[^4..] : digitsOnly;
+        if (!int.TryParse(lastFour, out var number)) return value;
+        return $"TS{number:D4}";
+    }
+
+    private static string NormalizeDisplayCode(string? code)
+    {
+        var value = (code ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var digitsOnly = Regex.Replace(value, "\\D", "");
+        if (string.IsNullOrWhiteSpace(digitsOnly)) return value;
+
+        var lastFour = digitsOnly.Length > 4 ? digitsOnly[^4..] : digitsOnly;
+        if (!int.TryParse(lastFour, out var number)) return value;
+        return $"TS{number:D4}";
+    }
+
+    private static string GenerateUniqueCode(string? rawCode, ISet<string> usedCodes)
+    {
+        var value = (rawCode ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            return GetNextAvailableCode(usedCodes);
+
+        var legacyMatch = Regex.Match(value, "(?i)^ts[-\\s]*?\\d{7,}$");
+        if (legacyMatch.Success)
+            return GetNextAvailableCode(usedCodes);
+
+        var normalized = NormalizeDisplayCode(value);
+        if (string.IsNullOrWhiteSpace(normalized))
+            return GetNextAvailableCode(usedCodes);
+
+        if (!usedCodes.Contains(normalized) || string.Equals(normalized, value, StringComparison.OrdinalIgnoreCase))
+            return normalized;
+
+        return GetNextAvailableCode(usedCodes);
+    }
+
+    private static string GetNextAvailableCode(ISet<string> usedCodes)
+    {
+        var next = 1;
+        while (usedCodes.Contains($"TS{next:D4}"))
+            next++;
+        return $"TS{next:D4}";
+    }
+
+    private static string NormalizePhoneNumber(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return string.Empty;
+        var normalized = Regex.Replace(phone.Trim(), "\\D", "");
+        if (normalized.Length == 11 && normalized.StartsWith("84"))
+            normalized = "0" + normalized[2..];
+        return normalized;
+    }
+
+    private static bool IsValidPhoneNumber(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return false;
+        var normalized = NormalizePhoneNumber(phone);
+        return normalized.Length == 10 && Regex.IsMatch(normalized, "^0(3|5|7|8|9)\\d{8}$");
+    }
+
+    private static string GetNextAvailablePhoneNumber(ISet<string> usedPhones, IEnumerable<string>? preferredPool = null)
+    {
+        var pool = preferredPool ?? DefaultPhonePool;
+        foreach (var candidate in pool)
+        {
+            var normalized = NormalizePhoneNumber(candidate);
+            if (!string.IsNullOrWhiteSpace(normalized) && !usedPhones.Contains(normalized))
+                return normalized;
+        }
+
+        var prefixes = new[] { "03", "05", "07", "08", "09" };
+        for (var i = 0; i < 1000000; i++)
+        {
+            foreach (var prefix in prefixes)
+            {
+                var candidate = prefix + i.ToString("D7");
+                if (!usedPhones.Contains(candidate))
+                    return candidate;
+            }
+        }
+        return string.Empty;
     }
 
     private static void Apply(ThiSinh candidate, ThiSinhImportDto dto)
@@ -290,6 +511,20 @@ public class ThiSinhService
         candidate.NganhHoc = AcademicCatalog.NormalizeNganhHoc(candidate.Khoa, dto.NganhHoc);
         candidate.SoTien = dto.SoTien;
         candidate.EmailCaNhan = dto.EmailCaNhan;
+    }
+
+    private static string RemoveDiacritics(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder();
+        foreach (var ch in normalized)
+        {
+            var category = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (category != UnicodeCategory.NonSpacingMark)
+                builder.Append(ch);
+        }
+        return builder.ToString().Normalize(NormalizationForm.FormC).Trim().ToLowerInvariant();
     }
 
     private static string? Read(IXLRangeRow row, IReadOnlyDictionary<string, int> headers, params string[] names)

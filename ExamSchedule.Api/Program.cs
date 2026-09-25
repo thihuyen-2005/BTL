@@ -216,6 +216,13 @@ using (var scope = app.Services.CreateScope())
         UPDATE `thisinh`
         SET `khoa` = NULLIF(TRIM(`khoa`), '')
           , `nganh_hoc` = NULLIF(TRIM(`nganh_hoc`), '');");
+    var thiSinhService = scope.ServiceProvider.GetRequiredService<ThiSinhService>();
+    await thiSinhService.NormalizeDataIntegrityAsync();
+    db.Database.ExecuteSqlRaw(@"
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_thisinh_so_dien_thoai
+        ON thisinh (so_dien_thoai);
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_thisinh_ma_thisinh
+        ON thisinh (ma_thisinh);");
     var requiredColumnExists = db.Database.SqlQueryRaw<int>(@"
         SELECT COUNT(*) AS `Value` FROM information_schema.columns
         WHERE table_schema = DATABASE()

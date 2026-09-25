@@ -153,6 +153,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.EmailCaNhan).HasColumnName("email_ca_nhan").HasMaxLength(150);
             e.Property(x => x.NgayTao).HasColumnName("ngay_tao");
             e.HasIndex(x => x.MaThiSinh).IsUnique();
+            e.HasIndex(x => x.SoDienThoai).IsUnique();
             e.HasIndex(x => x.SoCccdHoChieu).IsUnique();
         });
 

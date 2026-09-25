@@ -54,13 +54,12 @@ function populateAcademicSelects() {
 
     const filterNganh = document.getElementById("filterNganh");
     const majorSelect = document.getElementById("nganhHoc");
-    const selectedKhoa = formKhoa.value;
-    const selectedFilterKhoa = filterKhoa.value;
-    const renderMajorOptions = (select, emptyLabel, khoaValue) => {
-        const currentValue = select.value;
-        const majors = khoaValue && nganhTheoKhoa[khoaValue] ? nganhTheoKhoa[khoaValue] : [];
+    const allMajors = [...new Set(Object.values(nganhTheoKhoa).flat())];
+
+    const renderMajorOptions = (select, emptyLabel, selectedValue = "") => {
+        const currentValue = select.value || selectedValue;
         select.innerHTML = `<option value="">${emptyLabel}</option>`;
-        majors.forEach(major => {
+        allMajors.forEach(major => {
             const option = document.createElement("option");
             option.value = major;
             option.textContent = major;
@@ -68,16 +67,20 @@ function populateAcademicSelects() {
             select.appendChild(option);
         });
     };
-    renderMajorOptions(majorSelect, "-- Chọn ngành --", selectedKhoa);
-    renderMajorOptions(filterNganh, "Tất cả ngành", selectedFilterKhoa);
+
+    renderMajorOptions(majorSelect, "-- Chọn ngành --", majorSelect.value || "");
+    renderMajorOptions(filterNganh, "Tất cả ngành", filterNganh.value || "");
 }
 
 function refreshMajorOptionsForForm(selectedKhoa) {
     const majorSelect = document.getElementById("nganhHoc");
     const currentValue = majorSelect.value;
-    const majors = selectedKhoa && nganhTheoKhoa[selectedKhoa] ? nganhTheoKhoa[selectedKhoa] : [];
+    const majors = [...new Set(Object.values(nganhTheoKhoa).flat())];
+    if (selectedKhoa && nganhTheoKhoa[selectedKhoa]) {
+        majors.unshift(...nganhTheoKhoa[selectedKhoa]);
+    }
     majorSelect.innerHTML = '<option value="">-- Chọn ngành --</option>';
-    majors.forEach(major => {
+    [...new Set(majors)].forEach(major => {
         const option = document.createElement("option");
         option.value = major;
         option.textContent = major;
@@ -89,9 +92,12 @@ function refreshMajorOptionsForForm(selectedKhoa) {
 function populateFilterMajorOptions(selectedKhoa) {
     const filterNganh = document.getElementById("filterNganh");
     const currentValue = filterNganh.value;
-    const majors = selectedKhoa && nganhTheoKhoa[selectedKhoa] ? nganhTheoKhoa[selectedKhoa] : [];
+    const majors = [...new Set(Object.values(nganhTheoKhoa).flat())];
+    if (selectedKhoa && nganhTheoKhoa[selectedKhoa]) {
+        majors.unshift(...nganhTheoKhoa[selectedKhoa]);
+    }
     filterNganh.innerHTML = '<option value="">Tất cả ngành</option>';
-    majors.forEach(major => {
+    [...new Set(majors)].forEach(major => {
         const option = document.createElement("option");
         option.value = major;
         option.textContent = major;
@@ -104,12 +110,10 @@ const REQUIRED_FIELDS = [
     { id: "hoTen", label: "Họ và tên" },
     { id: "ngaySinh", label: "Ngày sinh" },
     { id: "gioiTinh", label: "Giới tính" },
-    { id: "soCccdHoChieu", label: "Số CCCD/Hộ chiếu" },
     { id: "soDienThoai", label: "Số điện thoại" },
     { id: "lop", label: "Lớp" },
     { id: "nganhHoc", label: "Ngành học" },
-    { id: "khoa", label: "Khoa" },
-    { id: "soTien", label: "Tình trạng học phí" }
+    { id: "khoa", label: "Khoa" }
 ];
 
 function clearValidationState() {
@@ -157,6 +161,14 @@ function syncSelectedRows() {
     deleteSelectedBtn.disabled = selectedIds.size === 0;
 }
 
+function normalizeVietnameseName(value = "") {
+    return value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d").replace(/Đ/g, "D")
+        .toLowerCase();
+}
+
 async function loadCandidates() {
     const keyword = document.getElementById("search").value.trim();
     const paidFilter = document.getElementById("filterPaid").value;
@@ -170,21 +182,35 @@ async function loadCandidates() {
         if (paidFilter === "paid") params.set("daNop", "true");
         if (paidFilter === "unpaid") params.set("daNop", "false");
         const list = await apiFetch(`/thisinh?${params}`);
-        candidates = list;
-        tbody.innerHTML = list.length ? list.map(x => `
+        candidates = [...list].sort((a, b) => normalizeVietnameseName(a.hoTen).localeCompare(normalizeVietnameseName(b.hoTen)));
+        tbody.innerHTML = candidates.length ? candidates.map(x => `
             <tr>
                 <td class="checkbox-col"><input class="row-select" type="checkbox" data-id="${x.thiSinhId}" ${selectedIds.has(x.thiSinhId) ? "checked" : ""}></td>
-                <td><strong>${x.maThiSinh}</strong></td><td>${x.hoTen}</td>
-                <td>${formatDate(x.ngaySinh)}</td><td>${x.lop || ""}</td>
-                <td>${x.nganhHoc || ""}</td><td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
+                <td><strong>${x.maThiSinh || ""}</strong></td>
+                <td>${x.hoTen || ""}</td>
+                <td>${formatDate(x.ngaySinh)}</td>
+                <td>${x.gioiTinh || ""}</td>
+                <td>${x.danToc || ""}</td>
+                <td>${x.noiSinh || ""}</td>
+                <td>${x.quocTich || ""}</td>
+                <td>${x.soCccdHoChieu || ""}</td>
+                <td>${x.soDienThoai || ""}</td>
+                <td>${x.lop || ""}</td>
+                <td>${x.khoa || ""}</td>
+                <td>${x.nganhHoc || ""}</td>
+                <td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
                 <td>${x.emailCaNhan || ""}</td>
-                <td><button class="btn-sm btn-edit" onclick="editCandidate(${x.thiSinhId})">✏️ Sửa</button>
-                <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">🗑️ Xóa</button></td>
+                <td class="sticky-action">
+                    <div class="actions-cell">
+                        <button class="btn-sm btn-edit" onclick="editCandidate(${x.thiSinhId})">Sửa</button>
+                        <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">Xóa</button>
+                    </div>
+                </td>
             </tr>`).join("") :
-            `<tr><td colspan="9"><div class="empty">Chưa có thí sinh</div></td></tr>`;
+            `<tr><td colspan="16"><div class="empty">Chưa có thí sinh</div></td></tr>`;
         syncSelectedRows();
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="9"><div class="empty">${error.message}</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="16"><div class="empty">${error.message}</div></td></tr>`;
     }
 }
 
@@ -209,7 +235,11 @@ document.getElementById("btnRefreshFilters").onclick = () => {
     selectedIds.clear();
     loadCandidates();
 };
-document.getElementById("search").oninput = loadCandidates;
+let searchDebounceTimer = null;
+document.getElementById("search").addEventListener("input", () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => loadCandidates(), 300);
+});
 document.getElementById("filterLop").oninput = loadCandidates;
 document.getElementById("filterNganh").onchange = loadCandidates;
 document.getElementById("filterKhoa").onchange = () => {
