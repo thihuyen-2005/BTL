@@ -92,23 +92,33 @@ public class ThiSinhService
     public async Task NormalizeDataIntegrityAsync()
     {
         var candidates = await _db.ThiSinhs.OrderBy(x => x.ThiSinhId).ToListAsync();
-        var usedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var assignedCodeIndex = 1;
 
+        var usedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates)
         {
-            while (usedCodes.Contains($"TS{assignedCodeIndex:D4}", StringComparer.OrdinalIgnoreCase))
-                assignedCodeIndex++;
+            var normalized = NormalizeDisplayCode(candidate.MaThiSinh);
+            if (!string.IsNullOrWhiteSpace(normalized))
+                usedCodes.Add(normalized);
+        }
 
-            var normalizedCode = $"TS{assignedCodeIndex:D4}";
-            if (!string.Equals(candidate.MaThiSinh, normalizedCode, StringComparison.OrdinalIgnoreCase))
+        var nextCodeNumber = 1;
+        foreach (var candidate in candidates)
+        {
+            var existing = NormalizeDisplayCode(candidate.MaThiSinh);
+            if (!string.IsNullOrWhiteSpace(existing) && IsCanonicalShortCode(existing) && !usedCodes.Where(x => x.Equals(existing, StringComparison.OrdinalIgnoreCase)).Skip(1).Any())
             {
-                Console.WriteLine($"[ThiSinhIntegrity] Đổi mã thí sinh {candidate.MaThiSinh} -> {normalizedCode}; ThiSinhId={candidate.ThiSinhId}");
-                candidate.MaThiSinh = normalizedCode;
+                candidate.MaThiSinh = existing;
+                continue;
             }
 
-            usedCodes.Add(candidate.MaThiSinh);
-            assignedCodeIndex++;
+            while (usedCodes.Contains($"TS{nextCodeNumber:D4}", StringComparer.OrdinalIgnoreCase))
+                nextCodeNumber++;
+
+            var newCode = $"TS{nextCodeNumber:D4}";
+            Console.WriteLine($"[ThiSinhIntegrity] Đổi mã thí sinh {candidate.MaThiSinh} -> {newCode}; ThiSinhId={candidate.ThiSinhId}");
+            candidate.MaThiSinh = newCode;
+            usedCodes.Add(newCode);
+            nextCodeNumber++;
         }
 
         var usedPhones = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -407,12 +417,19 @@ public class ThiSinhService
         var value = (code ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(value)) return string.Empty;
 
+        var match = Regex.Match(value, "(?i)^ts\\s*[- ]?\\s*(\\d{1,4})$");
+        if (match.Success)
+        {
+            var number = int.Parse(match.Groups[1].Value);
+            return $"TS{number:D4}";
+        }
+
         var digitsOnly = Regex.Replace(value, "\\D", "");
         if (string.IsNullOrWhiteSpace(digitsOnly)) return value;
+        if (digitsOnly.Length <= 4 && int.TryParse(digitsOnly, out var shortNumber))
+            return $"TS{shortNumber:D4}";
 
-        var lastFour = digitsOnly.Length > 4 ? digitsOnly[^4..] : digitsOnly;
-        if (!int.TryParse(lastFour, out var number)) return value;
-        return $"TS{number:D4}";
+        return string.Empty;
     }
 
     private static string NormalizeDisplayCode(string? code)
@@ -420,12 +437,24 @@ public class ThiSinhService
         var value = (code ?? string.Empty).Trim();
         if (string.IsNullOrWhiteSpace(value)) return string.Empty;
 
-        var digitsOnly = Regex.Replace(value, "\\D", "");
-        if (string.IsNullOrWhiteSpace(digitsOnly)) return value;
+        var match = Regex.Match(value, "(?i)^ts\\s*[- ]?\\s*(\\d{1,4})$");
+        if (match.Success)
+        {
+            var number = int.Parse(match.Groups[1].Value);
+            return $"TS{number:D4}";
+        }
 
-        var lastFour = digitsOnly.Length > 4 ? digitsOnly[^4..] : digitsOnly;
-        if (!int.TryParse(lastFour, out var number)) return value;
-        return $"TS{number:D4}";
+        var digitsOnly = Regex.Replace(value, "\\D", "");
+        if (digitsOnly.Length <= 4 && int.TryParse(digitsOnly, out var shortNumber))
+            return $"TS{shortNumber:D4}";
+
+        return string.Empty;
+    }
+
+    private static bool IsCanonicalShortCode(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return false;
+        return Regex.IsMatch(code, "(?i)^TS\\d{4}$") && int.TryParse(code[2..], out var value) && value >= 1 && value <= 9999;
     }
 
     private static string GenerateUniqueCode(string? rawCode, ISet<string> usedCodes)
