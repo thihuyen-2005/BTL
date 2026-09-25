@@ -7,8 +7,54 @@ const manualModal = document.getElementById("manualModal");
 const importModal = document.getElementById("importModal");
 const selectAll = document.getElementById("selectAllRows");
 const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
+const validationMessage = document.getElementById("manualValidationMessage");
 let candidates = [];
 let selectedIds = new Set();
+
+const REQUIRED_FIELDS = [
+    { id: "hoTen", label: "Họ và tên" },
+    { id: "ngaySinh", label: "Ngày sinh" },
+    { id: "gioiTinh", label: "Giới tính" },
+    { id: "soCccdHoChieu", label: "Số CCCD/Hộ chiếu" },
+    { id: "soDienThoai", label: "Số điện thoại" },
+    { id: "lop", label: "Lớp" },
+    { id: "nganhHoc", label: "Ngành học" },
+    { id: "khoa", label: "Khoa" },
+    { id: "soTien", label: "Tình trạng học phí" }
+];
+
+function clearValidationState() {
+    validationMessage.classList.add("hidden");
+    validationMessage.textContent = "";
+    REQUIRED_FIELDS.forEach(field => {
+        const el = document.getElementById(field.id);
+        if (el) el.classList.remove("input-error");
+    });
+}
+
+function showValidationState(missingFields) {
+    const list = missingFields.map(field => `• ${field}`).join("<br>");
+    validationMessage.innerHTML = `Bạn chưa điền đầy đủ các trường bắt buộc:<br>${list}`;
+    validationMessage.classList.remove("hidden");
+
+    missingFields.forEach(fieldName => {
+        const field = REQUIRED_FIELDS.find(item => item.label === fieldName);
+        if (!field) return;
+        const el = document.getElementById(field.id);
+        if (el) el.classList.add("input-error");
+    });
+}
+
+function getMissingRequiredFields() {
+    const missing = [];
+    REQUIRED_FIELDS.forEach(field => {
+        const el = document.getElementById(field.id);
+        if (!el) return;
+        const value = el.value == null ? "" : String(el.value).trim();
+        if (!value) missing.push(field.label);
+    });
+    return missing;
+}
 
 function formatDate(value) {
     return value ? new Date(value).toLocaleDateString("vi-VN") : "";
@@ -56,6 +102,7 @@ async function loadCandidates() {
 document.getElementById("btnManual").onclick = () => {
     document.getElementById("candidateForm").reset();
     document.getElementById("candidateId").value = "";
+    clearValidationState();
     document.getElementById("manualTitle").textContent = "Thêm thí sinh";
     manualModal.classList.remove("hidden");
 };
@@ -92,12 +139,13 @@ selectAll.addEventListener("change", (event) => {
 window.editCandidate = id => {
     const candidate = candidates.find(x => x.thiSinhId === id);
     if (!candidate) return;
+    clearValidationState();
     const set = (name, value) => document.getElementById(name).value = value || "";
     set("candidateId", candidate.thiSinhId); set("maThiSinh", candidate.maThiSinh); set("hoTen", candidate.hoTen);
     set("ngaySinh", candidate.ngaySinh?.substring(0, 10)); set("gioiTinh", candidate.gioiTinh);
     set("soCccdHoChieu", candidate.soCccdHoChieu); set("soDienThoai", candidate.soDienThoai);
     set("lop", candidate.lop); set("nganhHoc", candidate.nganhHoc); set("khoa", candidate.khoa);
-    set("soTien", candidate.soTien == null ? "" : "800000"); set("emailCaNhan", candidate.emailCaNhan);
+    set("soTien", candidate.soTien == null ? "0" : String(candidate.soTien)); set("emailCaNhan", candidate.emailCaNhan);
     document.getElementById("manualTitle").textContent = "Sửa thông tin thí sinh";
     manualModal.classList.remove("hidden");
 };
@@ -129,20 +177,29 @@ deleteSelectedBtn.onclick = async () => {
 
 document.getElementById("candidateForm").onsubmit = async event => {
     event.preventDefault();
+    clearValidationState();
+
+    const missing = getMissingRequiredFields();
+    if (missing.length > 0) {
+        showValidationState(missing);
+        return;
+    }
+
     const value = id => document.getElementById(id).value.trim();
     try {
         const id = value("candidateId");
         const payload = {
-            maThiSinh: value("maThiSinh"), hoTen: value("hoTen"),
+            maThiSinh: value("maThiSinh") || null, hoTen: value("hoTen"),
             ngaySinh: value("ngaySinh") || null, gioiTinh: value("gioiTinh") || null,
             soCccdHoChieu: value("soCccdHoChieu") || null, soDienThoai: value("soDienThoai") || null,
             lop: value("lop") || null, nganhHoc: value("nganhHoc") || null,
-            khoa: value("khoa") || null, soTien: value("soTien") ? Number(value("soTien")) : null,
+            khoa: value("khoa") || null, soTien: value("soTien") !== "" ? Number(value("soTien")) : null,
             emailCaNhan: value("emailCaNhan") || null
         };
         await apiFetch(id ? `/thisinh/${id}` : "/thisinh", { method: id ? "PUT" : "POST", body: JSON.stringify(payload) });
         manualModal.classList.add("hidden");
         event.target.reset();
+        clearValidationState();
         toast("Đã lưu thí sinh", "success");
         loadCandidates();
     } catch (error) { toast("Không thể lưu: " + error.message, "error"); }

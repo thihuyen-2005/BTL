@@ -44,22 +44,25 @@
             <h2 id="manualTitle">Thêm thí sinh</h2>
             <form id="candidateForm">
                 <input id="candidateId" type="hidden">
-                <label>Mã thí sinh <input id="maThiSinh" required placeholder="TS001"></label>
-                <label>Họ và tên <input id="hoTen" required></label>
-                <label>Ngày sinh <input id="ngaySinh" type="date"></label>
-                <label>Giới tính <input id="gioiTinh"></label>
-                <label>Số CCCD/Hộ chiếu <input id="soCccdHoChieu"></label>
-                <label>Số điện thoại <input id="soDienThoai"></label>
-                <label>Lớp <input id="lop"></label>
-                <label>Ngành học <input id="nganhHoc"></label>
-                <label>Khoa <input id="khoa"></label>
-                <label>Tình trạng học phí
-                    <select id="soTien" required>
-                        <option value="800000">Đã nộp 800.000 đồng</option>
-                        <option value="">Chưa nộp</option>
+                <div id="manualValidationMessage" class="validation-message hidden"></div>
+
+                <label class="field-label">Mã thí sinh <span class="optional-tag">(tùy chọn)</span><input id="maThiSinh" placeholder="TS001"></label>
+                <label class="field-label required">Họ và tên<input id="hoTen"></label>
+                <label class="field-label required">Ngày sinh <span class="hint">dd/mm/yyyy</span><input id="ngaySinh" type="date"></label>
+                <label class="field-label required">Giới tính<input id="gioiTinh"></label>
+                <label class="field-label required">Số CCCD/Hộ chiếu<input id="soCccdHoChieu"></label>
+                <label class="field-label required">Số điện thoại<input id="soDienThoai"></label>
+                <label class="field-label required">Lớp<input id="lop"></label>
+                <label class="field-label required">Ngành học<input id="nganhHoc"></label>
+                <label class="field-label required">Khoa<input id="khoa"></label>
+                <label class="field-label required">Tình trạng học phí
+                    <select id="soTien">
+                        <option value="">-- Chọn tình trạng học phí --</option>
+                        <option value="800">Đã nộp 800.000 đồng</option>
+                        <option value="0">Chưa nộp</option>
                     </select>
                 </label>
-                <label>Email cá nhân <input id="emailCaNhan" type="email"></label>
+                <label class="field-label">Email cá nhân <span class="optional-tag">(tùy chọn)</span><input id="emailCaNhan" type="email"></label>
                 <div class="actions">
                     <button type="button" id="btnCancelManual">Hủy</button>
                     <button type="submit">Lưu thí sinh</button>

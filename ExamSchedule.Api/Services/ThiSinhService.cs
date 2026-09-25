@@ -52,7 +52,7 @@ public class ThiSinhService
             .ToDictionaryAsync(x => x.MaThiSinh, StringComparer.OrdinalIgnoreCase);
         foreach (var dto in items.Where(x => !string.IsNullOrWhiteSpace(x.MaThiSinh) && !string.IsNullOrWhiteSpace(x.HoTen)))
         {
-            var code = NormalizeCode(dto.MaThiSinh);
+            var code = NormalizeCode(dto.MaThiSinh!);
             if (!candidates.TryGetValue(code, out var candidate))
             {
                 candidate = new ThiSinh { MaThiSinh = code };
@@ -69,21 +69,37 @@ public class ThiSinhService
 
     public async Task<ThiSinhResponseDto> CreateAsync(ThiSinhCreateDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.MaThiSinh) || string.IsNullOrWhiteSpace(dto.HoTen))
-            throw new BusinessException("Mã thí sinh và họ tên là bắt buộc.");
+        ValidateRequiredFields(dto);
 
-        await ImportAsync(new[] { (ThiSinhImportDto)dto });
-        var candidate = await _db.ThiSinhs.AsNoTracking()
-            .FirstAsync(x => x.MaThiSinh == dto.MaThiSinh.Trim());
+        var maThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh)
+            ? await GenerateNewMaThiSinhAsync()
+            : NormalizeCode(dto.MaThiSinh.Trim());
+
+        if (await _db.ThiSinhs.AnyAsync(x => x.MaThiSinh == maThiSinh))
+            throw new BusinessException("Mã thí sinh đã tồn tại.");
+
+        var candidate = new ThiSinh { MaThiSinh = maThiSinh };
+        Apply(candidate, dto with { MaThiSinh = maThiSinh });
+        _db.ThiSinhs.Add(candidate);
+        await _db.SaveChangesAsync();
         return ToDto(candidate);
     }
 
     public async Task<ThiSinhResponseDto> UpdateAsync(int id, ThiSinhUpdateDto dto)
     {
+        ValidateRequiredFields(dto);
+
         var candidate = await _db.ThiSinhs.FindAsync(id)
             ?? throw new NotFoundException("Không tìm thấy thí sinh.");
-        if (await _db.ThiSinhs.AnyAsync(x => x.ThiSinhId != id && x.MaThiSinh == dto.MaThiSinh.Trim()))
+
+        var normalizedMaThiSinh = string.IsNullOrWhiteSpace(dto.MaThiSinh)
+            ? candidate.MaThiSinh
+            : NormalizeCode(dto.MaThiSinh.Trim());
+
+        if (await _db.ThiSinhs.AnyAsync(x => x.ThiSinhId != id && x.MaThiSinh == normalizedMaThiSinh))
             throw new BusinessException("Mã thí sinh đã tồn tại.");
+
+        dto = dto with { MaThiSinh = normalizedMaThiSinh };
         Apply(candidate, dto);
         await _db.SaveChangesAsync();
         return ToDto(candidate);
@@ -205,20 +221,55 @@ public class ThiSinhService
             await _db.Entry(registration).Reference(x => x.CaThi).LoadAsync();
     }
 
+    private async Task<string> GenerateNewMaThiSinhAsync()
+    {
+        var last = await _db.ThiSinhs.AsNoTracking()
+            .Where(x => x.MaThiSinh.StartsWith("TS-"))
+            .OrderByDescending(x => x.ThiSinhId)
+            .Select(x => x.MaThiSinh)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(last)) return "TS-0001";
+
+        var suffix = last[3..];
+        if (int.TryParse(suffix, out var number))
+            return $"TS-{number + 1:0000}";
+
+        return $"TS-{DateTime.UtcNow:yyyyMMddHHmmss}";
+    }
+
+    private static void ValidateRequiredFields(ThiSinhImportDto dto)
+    {
+        var missing = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(dto.HoTen)) missing.Add("Họ và tên");
+        if (!dto.NgaySinh.HasValue) missing.Add("Ngày sinh");
+        if (string.IsNullOrWhiteSpace(dto.GioiTinh)) missing.Add("Giới tính");
+        if (string.IsNullOrWhiteSpace(dto.SoCccdHoChieu)) missing.Add("Số CCCD/Hộ chiếu");
+        if (string.IsNullOrWhiteSpace(dto.SoDienThoai)) missing.Add("Số điện thoại");
+        if (string.IsNullOrWhiteSpace(dto.Lop)) missing.Add("Lớp");
+        if (string.IsNullOrWhiteSpace(dto.NganhHoc)) missing.Add("Ngành học");
+        if (string.IsNullOrWhiteSpace(dto.Khoa)) missing.Add("Khoa");
+        if (dto.SoTien is null) missing.Add("Tình trạng học phí");
+
+        if (missing.Count > 0)
+            throw new BusinessException($"Thiếu thông tin bắt buộc: {string.Join(", ", missing)}.");
+    }
+
     private static ThiSinhResponseDto ToDto(ThiSinh x) => new(
         x.ThiSinhId, x.MaThiSinh, x.HoTen, x.NgaySinh, x.GioiTinh, x.DanToc,
         x.NoiSinh, x.QuocTich, x.SoCccdHoChieu, x.SoDienThoai, x.Lop,
         x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan);
 
-    private static string NormalizeCode(string code)
+    private static string NormalizeCode(string? code)
     {
-        var value = code.Trim();
+        var value = (code ?? string.Empty).Trim();
         return int.TryParse(value, out var ordinal) ? $"TS-{ordinal:0000}" : value;
     }
 
     private static void Apply(ThiSinh candidate, ThiSinhImportDto dto)
     {
-        candidate.MaThiSinh = dto.MaThiSinh.Trim();
+        candidate.MaThiSinh = dto.MaThiSinh?.Trim() ?? candidate.MaThiSinh;
         candidate.HoTen = dto.HoTen.Trim();
         candidate.NgaySinh = dto.NgaySinh;
         candidate.GioiTinh = dto.GioiTinh;

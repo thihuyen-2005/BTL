@@ -429,6 +429,59 @@ td .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
     box-shadow: var(--shadow-lg);
     animation: slideUp .18s ease;
 }
+.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 10px;
+}
+.field-label.required::before {
+    content: "*";
+    color: #dc2626;
+    margin-right: 5px;
+    font-weight: 700;
+}
+.field-label .hint,
+.field-label .optional-tag {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    margin-left: 6px;
+}
+.field-label input,
+.field-label select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #fff;
+}
+.field-label input:focus,
+.field-label select:focus {
+    outline: 2px solid rgba(59,130,246,.18);
+    border-color: var(--primary);
+}
+.validation-message {
+    background: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.validation-message.hidden {
+    display: none;
+}
+.input-error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, .08);
+}
 .modal-wide { width: min(760px, 94vw); }
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
