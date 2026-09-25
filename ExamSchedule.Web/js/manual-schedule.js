@@ -18,10 +18,7 @@ let candidates = [];
 let selectedIds = new Set();
 
 function parseSelectedIdsFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get("selectedIds");
-    if (!raw) return [];
-    return raw.split(",").map((item) => Number(item.trim())).filter((item) => Number.isFinite(item) && item > 0);
+    return [];
 }
 
 function extractItems(payload) {
@@ -294,11 +291,7 @@ async function loadCandidates() {
         const query = new URLSearchParams({ kyThiId: String(examId) });
         const payload = await apiFetch(`/thisinh/schedule-candidates?${query.toString()}`);
         candidates = extractItems(payload);
-
-        const preselected = parseSelectedIdsFromUrl();
-        if (preselected.length > 0 && selectedIds.size === 0) {
-            selectedIds = new Set(preselected.filter((id) => candidates.some((candidate) => candidate.thiSinhId === id)));
-        }
+        selectedIds.clear();
 
         const legalIds = new Set(candidates.map((candidate) => candidate.thiSinhId));
         [...selectedIds].forEach((id) => {
@@ -432,18 +425,10 @@ document.getElementById("clearSelectionBtn").addEventListener("click", () => {
 });
 document.getElementById("refreshBtn").addEventListener("click", async () => {
     selectedIds.clear();
-    const initialSelectedIds = parseSelectedIdsFromUrl();
-    if (initialSelectedIds.length > 0) {
-        selectedIds = new Set(initialSelectedIds);
-    }
     await loadExams();
     renderSelectedSummary();
 });
 document.getElementById("autoScheduleBtn").addEventListener("click", runAutoSchedule);
 
-const initialSelectedIds = parseSelectedIdsFromUrl();
-if (initialSelectedIds.length > 0) {
-    selectedIds = new Set(initialSelectedIds);
-}
-
+selectedIds.clear();
 loadExams();

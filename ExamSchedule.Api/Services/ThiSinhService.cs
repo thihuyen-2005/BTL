@@ -353,38 +353,80 @@ public class ThiSinhService
 
     public async Task<List<ThiSinhScheduleCandidateDto>> GetManualScheduleCandidatesAsync(int kyThiId)
     {
-        var registrations = await _db.DangKyThis
-            .Include(x => x.ThiSinh)
-            .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
+        var examRegistrations = await _db.DangKyThis
             .AsNoTracking()
             .Where(x => x.KyThiId == kyThiId)
-            .OrderBy(x => x.ThiSinh.HoTen)
+            .Select(x => new
+            {
+                x.ThiSinhId,
+                x.DangKyThiId,
+                x.CaThiId,
+                x.TrangThai,
+                x.LyDoChuaXep,
+                ThoiGianBatDau = x.CaThi != null ? (DateTime?)x.CaThi.ThoiGianBatDau : null,
+                ThoiGianKetThuc = x.CaThi != null ? (DateTime?)x.CaThi.ThoiGianKetThuc : null,
+                MaPhong = x.CaThi != null && x.CaThi.PhongThi != null ? x.CaThi.PhongThi.MaPhong : null
+            })
+            .ToListAsync();
+
+        var registrationMap = examRegistrations.ToDictionary(x => x.ThiSinhId);
+
+        var eligibleStudents = await _db.ThiSinhs
+            .AsNoTracking()
+            .Where(x => x.SoTien.HasValue && x.SoTien.Value >= MucNopToiThieu)
+            .OrderBy(x => x.HoTen)
             .ThenBy(x => x.ThiSinhId)
             .ToListAsync();
 
-        return registrations.Select(x =>
+        var result = new List<ThiSinhScheduleCandidateDto>();
+        foreach (var student in eligibleStudents)
         {
-            var paid = x.ThiSinh.SoTien.HasValue && x.ThiSinh.SoTien.Value >= MucNopToiThieu;
-            var alreadyScheduled = x.CaThiId.HasValue && x.TrangThai == TrangThaiDangKyThi.DaXep;
-            var canSchedule = paid && !alreadyScheduled;
-            return new ThiSinhScheduleCandidateDto(
-                x.DangKyThiId,
-                x.ThiSinhId,
-                x.ThiSinh.MaThiSinh ?? "",
-                x.ThiSinh.HoTen ?? "",
-                x.ThiSinh.Lop,
-                x.ThiSinh.Khoa,
-                x.ThiSinh.NganhHoc,
-                x.ThiSinh.SoTien,
-                x.TrangThai.ToString(),
-                x.LyDoChuaXep,
-                x.CaThiId,
-                x.CaThi?.ThoiGianBatDau,
-                x.CaThi?.ThoiGianKetThuc,
-                x.CaThi?.PhongThi?.MaPhong,
-                canSchedule,
-                !paid ? "Chưa nộp đủ lệ phí 800.000 đồng" : alreadyScheduled ? "Đã có ca thi" : "Sẵn sàng xếp lịch");
-        }).ToList();
+            if (registrationMap.TryGetValue(student.ThiSinhId, out var reg))
+            {
+                var paid = student.SoTien.HasValue && student.SoTien.Value >= MucNopToiThieu;
+                var alreadyScheduled = reg.CaThiId.HasValue && reg.TrangThai == TrangThaiDangKyThi.DaXep;
+                var canSchedule = paid && !alreadyScheduled;
+
+                result.Add(new ThiSinhScheduleCandidateDto(
+                    reg.DangKyThiId,
+                    student.ThiSinhId,
+                    student.MaThiSinh ?? "",
+                    student.HoTen ?? "",
+                    student.Lop,
+                    student.Khoa,
+                    student.NganhHoc,
+                    student.SoTien,
+                    reg.TrangThai.ToString(),
+                    reg.LyDoChuaXep,
+                    reg.CaThiId,
+                    reg.ThoiGianBatDau,
+                    reg.ThoiGianKetThuc,
+                    reg.MaPhong,
+                    canSchedule,
+                    !paid ? "Chưa nộp đủ lệ phí 800.000 đồng" : alreadyScheduled ? "Đã có ca thi" : "Sẵn sàng xếp lịch"));
+                continue;
+            }
+
+            result.Add(new ThiSinhScheduleCandidateDto(
+                0,
+                student.ThiSinhId,
+                student.MaThiSinh ?? "",
+                student.HoTen ?? "",
+                student.Lop,
+                student.Khoa,
+                student.NganhHoc,
+                student.SoTien,
+                TrangThaiDangKyThi.ChoXep.ToString(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "Sẵn sàng xếp lịch"));
+        }
+
+        return result;
     }
 
     public async Task<List<ThiSinhScheduleCandidateDto>> AssignManualScheduleAsync(int kyThiId, int caThiId, List<int> thiSinhIds)
@@ -400,23 +442,43 @@ public class ThiSinhService
         var session = await _db.CaThis.FirstOrDefaultAsync(x => x.CaThiId == caThiId && x.KyThiId == kyThiId)
             ?? throw new NotFoundException("Không tìm thấy ca thi trong kỳ thi được chọn.");
 
-        var registrations = await _db.DangKyThis
-            .Include(x => x.ThiSinh)
-            .Where(x => x.KyThiId == kyThiId && thiSinhIds.Contains(x.ThiSinhId))
+        var distinctIds = thiSinhIds.Distinct().ToList();
+        var students = await _db.ThiSinhs
+            .Where(x => distinctIds.Contains(x.ThiSinhId))
             .ToListAsync();
 
-        if (registrations.Count != thiSinhIds.Distinct().Count())
-            throw new BusinessException("Một số thí sinh không thuộc kỳ thi được chọn.");
+        if (students.Count != distinctIds.Count)
+            throw new BusinessException("Một số thí sinh không tồn tại trong hệ thống.");
 
+        var registrations = await _db.DangKyThis
+            .Include(x => x.ThiSinh)
+            .Where(x => x.KyThiId == kyThiId && distinctIds.Contains(x.ThiSinhId))
+            .ToListAsync();
+
+        var registrationMap = registrations.ToDictionary(x => x.ThiSinhId);
         var currentOccupied = await _db.DangKyThis.CountAsync(x => x.CaThiId == caThiId && x.TrangThai == TrangThaiDangKyThi.DaXep && x.KyThiId == kyThiId);
-        var incomingCount = thiSinhIds.Distinct().Count();
+        var incomingCount = distinctIds.Count;
         if (currentOccupied + incomingCount > session.SucChua)
             throw new BusinessException($"Ca thi đã đầy. Sức chứa hiện tại: {session.SucChua}; còn {session.SucChua - currentOccupied} chỗ.");
 
-        foreach (var registration in registrations)
+        foreach (var student in students)
         {
-            if (!registration.ThiSinh.SoTien.HasValue || registration.ThiSinh.SoTien.Value < MucNopToiThieu)
-                throw new BusinessException($"Thí sinh {registration.ThiSinh.HoTen} chưa nộp đủ lệ phí 800.000 đồng.");
+            if (!student.SoTien.HasValue || student.SoTien.Value < MucNopToiThieu)
+                throw new BusinessException($"Thí sinh {student.HoTen} chưa nộp đủ lệ phí 800.000 đồng.");
+
+            if (!registrationMap.TryGetValue(student.ThiSinhId, out var registration))
+            {
+                registration = new DangKyThi
+                {
+                    ThiSinhId = student.ThiSinhId,
+                    KyThiId = kyThiId,
+                    TrangThai = TrangThaiDangKyThi.ChoXep,
+                    LyDoChuaXep = null,
+                    NgayDangKy = DateTime.UtcNow
+                };
+                _db.DangKyThis.Add(registration);
+                registrationMap[student.ThiSinhId] = registration;
+            }
 
             registration.CaThiId = caThiId;
             registration.TrangThai = TrangThaiDangKyThi.DaXep;

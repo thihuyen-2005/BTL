@@ -230,34 +230,11 @@ function isEligibleForScheduling(student) {
 }
 
 function openManualScheduleFromSelection() {
-    const selected = [...document.querySelectorAll('.row-select:checked')]
-        .map(item => Number(item.dataset.id))
-        .filter(id => !Number.isNaN(id));
-
-    const eligibleIds = selected
-        .filter(id => {
-            const student = candidates.find(item => item.thiSinhId === id);
-            return !!student && isEligibleForScheduling(student);
-        });
-
-    const params = new URLSearchParams({ fromThiSinh: "1" });
-    if (eligibleIds.length > 0) {
-        params.set("selectedIds", eligibleIds.join(","));
-    }
-    window.location.href = `manual-schedule.html?${params.toString()}`;
+    window.location.href = "manual-schedule.html?fromThiSinh=1";
 }
 
 function goToManualScheduleForStudent(studentId) {
-    const student = candidates.find(item => item.thiSinhId === studentId);
-    const params = new URLSearchParams({ fromThiSinh: "1" });
-    if (student && isEligibleForScheduling(student)) {
-        params.set("selectedIds", String(studentId));
-    }
-    window.location.href = `manual-schedule.html?${params.toString()}`;
-}
-
-function goToManualScheduleForStudent(studentId) {
-    window.location.href = `manual-schedule.html?selectedIds=${studentId}&fromThiSinh=1`;
+    window.location.href = `manual-schedule.html?fromThiSinh=1`;
 }
 
 document.getElementById("btnManualSchedule").onclick = openManualScheduleFromSelection;
