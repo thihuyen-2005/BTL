@@ -44,8 +44,18 @@ public class ProctorService
             query = query.Where(p => p.Assignments.Any(a => a.Status == ProctorAssignmentStatus.Da_phan_cong));
 
         if (caThiId.HasValue)
-            query = query.Where(p => !p.Assignments.Any(a => a.CaThiId == caThiId.Value
-                && a.Status == ProctorAssignmentStatus.Da_phan_cong));
+        {
+            var session = await _db.CaThis.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CaThiId == caThiId.Value)
+                ?? throw new NotFoundException("Ca thi không tồn tại.");
+
+            query = query.Where(p => p.IsActive
+                && !p.Assignments.Any(a => a.CaThiId == caThiId.Value
+                    && a.Status == ProctorAssignmentStatus.Da_phan_cong)
+                && !p.Assignments.Any(a => a.Status == ProctorAssignmentStatus.Da_phan_cong
+                    && session.ThoiGianBatDau < a.CaThi.ThoiGianKetThuc
+                    && session.ThoiGianKetThuc > a.CaThi.ThoiGianBatDau));
+        }
 
         return await query.OrderBy(p => p.StaffCode)
             .Select(p => new ProctorListItemDto(

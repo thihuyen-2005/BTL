@@ -31,7 +31,8 @@ function syncSelectedRows() {
 }
 
 async function loadExams() {
-    const exams = await apiFetch("/exams");
+    const response = await apiFetch("/exams?page=1&limit=100");
+    const exams = response.items || response;
     examSelect.innerHTML = `<option value="">Chọn kỳ thi</option>` + exams.map(exam =>
         `<option value="${exam.kyThiId}" ${Number(exam.kyThiId) === Number(kyThiId) ? "selected" : ""}>${escapeHtml(exam.maKyThi)} - ${escapeHtml(exam.tenKyThi)}</option>`
     ).join("");
@@ -44,15 +45,36 @@ async function loadExams() {
 async function loadSessionsForExam(examId) {
     if (!examId) {
         sessionSelect.innerHTML = `<option value="">Chọn ca thi</option>`;
+        sessionSelect.disabled = true;
         selectedCaThiId = null;
         assignmentPanel.classList.add("hidden");
         return;
     }
 
-    const sessions = await apiFetch(`/exam-sessions?kyThiId=${examId}`);
+    sessionSelect.disabled = true;
+    sessionSelect.innerHTML = `<option value="">Đang tải ca thi...</option>`;
+    let sessions;
+    try {
+        sessions = await apiFetch(`/exam-sessions?kyThiId=${examId}`);
+    } catch (error) {
+        sessionSelect.innerHTML = `<option value="">Không thể tải ca thi</option>`;
+        selectedCaThiId = null;
+        assignmentPanel.classList.add("hidden");
+        toast("Không thể tải ca thi: " + error.message, "error");
+        return;
+    }
+
+    if (!sessions.length) {
+        sessionSelect.innerHTML = `<option value="">Kỳ thi này chưa có ca thi</option>`;
+        selectedCaThiId = null;
+        assignmentPanel.classList.add("hidden");
+        return;
+    }
+
     sessionSelect.innerHTML = `<option value="">Chọn ca thi</option>` + sessions.map(s =>
         `<option value="${s.caThiId}" ${Number(s.caThiId) === Number(selectedCaThiId ?? caThiId) ? "selected" : ""}>${escapeHtml(s.maPhong)} · ${formatDateTime(s.thoiGianBatDau)} - ${formatTime(s.thoiGianKetThuc)}</option>`
     ).join("");
+    sessionSelect.disabled = false;
 
     const effectiveId = Number.isInteger(caThiId) && caThiId > 0 ? caThiId : selectedCaThiId ?? null;
     if (effectiveId && sessions.some(s => Number(s.caThiId) === effectiveId)) {
@@ -75,9 +97,8 @@ async function loadProctors() {
         if (selectedCaThiId) params.set("caThiId", String(selectedCaThiId));
         allProctors = await apiFetch("/proctors?" + params.toString());
         renderProctors();
-        if (selectedCaThiId) await loadAssignmentPanel();
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="icon">⚠️</div><div>${error.message}</div></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="icon">⚠️</div><div>${error.message}</div></div></td></tr>`;
     }
 }
 
@@ -88,20 +109,45 @@ async function loadAssignmentPanel() {
     }
 
     assignmentPanel.classList.remove("hidden");
-    const [summary, available] = await Promise.all([
-        apiFetch(`/examsessions/${selectedCaThiId}/proctors`),
-        apiFetch(`/proctors?caThiId=${selectedCaThiId}&status=active`)
-    ]);
-    document.getElementById("assignmentTitle").textContent = `Phân công giám thị: ${summary.maKyThi}`;
-    document.getElementById("assignmentInfo").textContent = `${formatDateTime(summary.start)} ${formatTime(summary.start)} · ${summary.tenPhong} · Đã phân công ${summary.assignedCount}/${summary.requiredCount}`;
-    candidates = available;
     const select = document.getElementById("proctorSelect");
-    select.innerHTML = candidates.length
-        ? candidates.map(p => `<option value="${p.proctorProfileId}">${escapeHtml(p.staffCode)} - ${escapeHtml(p.fullName)}</option>`).join("")
-        : `<option value="">Không còn cán bộ phù hợp</option>`;
-    document.getElementById("assignmentList").innerHTML = summary.assignments.length
-        ? summary.assignments.map(a => `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><strong>${roleLabel(a.role)}</strong>: ${escapeHtml(a.fullName)} <button class="btn-sm btn-del" onclick="unassign(${a.assignmentId})">Hủy</button></div>`).join("")
-        : "<div class=\"empty\"><div>Chưa có giám thị</div></div>";
+    const assignButton = document.getElementById("btnAssign");
+    const autoAssignButton = document.getElementById("btnAutoAssign");
+    const roleSelect = document.getElementById("roleSelect");
+    const assignmentInfo = document.getElementById("assignmentInfo");
+    const assignmentList = document.getElementById("assignmentList");
+
+    assignmentInfo.textContent = "Đang tải thông tin phân công...";
+    assignmentList.innerHTML = `<div class="empty"><div class="icon">⏳</div><div>Đang tải danh sách giám thị...</div></div>`;
+    select.innerHTML = `<option value="">Đang tải danh sách giám thị...</option>`;
+    select.disabled = true;
+    roleSelect.disabled = true;
+    assignButton.disabled = true;
+    autoAssignButton.disabled = true;
+
+    try {
+        const [summary, available] = await Promise.all([
+            apiFetch(`/examsessions/${selectedCaThiId}/proctors`),
+            apiFetch(`/proctors?caThiId=${selectedCaThiId}&status=active`)
+        ]);
+        document.getElementById("assignmentTitle").textContent = `Phân công giám thị: ${summary.maKyThi}`;
+        assignmentInfo.textContent = `${formatDateTime(summary.start)} ${formatTime(summary.start)} · ${summary.tenPhong} · Đã phân công ${summary.assignedCount}/${summary.requiredCount}`;
+        candidates = available;
+        select.innerHTML = candidates.length
+            ? candidates.map(p => `<option value="${p.proctorProfileId}">${escapeHtml(p.staffCode)} - ${escapeHtml(p.fullName)}</option>`).join("")
+            : `<option value="">Không còn giám thị phù hợp cho ca này</option>`;
+        select.disabled = candidates.length === 0;
+        roleSelect.disabled = candidates.length === 0;
+        assignButton.disabled = candidates.length === 0;
+        autoAssignButton.disabled = candidates.length === 0;
+        assignmentList.innerHTML = summary.assignments.length
+            ? summary.assignments.map(a => `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><strong>${roleLabel(a.role)}</strong>: ${escapeHtml(a.fullName)} <button class="btn-sm btn-del" onclick="unassign(${a.assignmentId})">Hủy</button></div>`).join("")
+            : "<div class=\"empty\"><div>Chưa có giám thị</div></div>";
+    } catch (error) {
+        candidates = [];
+        assignmentInfo.textContent = `Không thể tải thông tin phân công: ${error.message}`;
+        assignmentList.innerHTML = "<div class=\"empty\"><div>Chưa tải được danh sách phân công.</div></div>";
+        select.innerHTML = `<option value="">Không tải được danh sách giám thị</option>`;
+    }
 }
 
 async function assignSelected() {
@@ -288,11 +334,11 @@ function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({
 function escapeJs(value) { return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
 
 document.getElementById("btnRefresh").onclick = async () => {
-    if (Number.isInteger(kyThiId) && kyThiId > 0) {
+    if (examSelect && sessionSelect && Number.isInteger(kyThiId) && kyThiId > 0) {
         await loadExams();
     }
     selectedProctorIds.clear();
-    await loadProctors();
+    await Promise.all([loadProctors(), selectedCaThiId ? loadAssignmentPanel() : Promise.resolve()]);
 };
 
 deleteSelectedBtn.onclick = async () => {
@@ -327,7 +373,7 @@ tbody.addEventListener("change", (event) => {
         syncSelectedRows();
     }
 });
-examSelect.onchange = async () => {
+if (examSelect) examSelect.onchange = async () => {
     const examId = Number(examSelect.value) || null;
     if (examId) {
         const url = new URL(location.href);
@@ -344,7 +390,7 @@ examSelect.onchange = async () => {
         await loadProctors();
     }
 };
-sessionSelect.onchange = async () => {
+if (sessionSelect) sessionSelect.onchange = async () => {
     const selected = Number(sessionSelect.value) || null;
     selectedCaThiId = selected;
     const url = new URL(location.href);
@@ -354,10 +400,11 @@ sessionSelect.onchange = async () => {
         url.searchParams.delete("caThiId");
     }
     history.replaceState({}, "", url);
-    await loadProctors();
+    await Promise.all([loadProctors(), loadAssignmentPanel()]);
 };
 
-(async () => {
-    await loadExams();
-    await loadProctors();
-})();
+loadProctors();
+if (selectedCaThiId) loadAssignmentPanel();
+if (examSelect && sessionSelect) {
+    loadExams().catch(error => toast("Không thể tải kỳ thi: " + error.message, "error"));
+}

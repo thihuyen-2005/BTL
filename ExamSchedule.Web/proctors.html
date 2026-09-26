@@ -28,6 +28,15 @@
             <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
 
+        <div class="toolbar" style="margin-bottom:14px;">
+            <select id="examSelect" aria-label="Chọn kỳ thi">
+                <option value="">Đang tải kỳ thi...</option>
+            </select>
+            <select id="sessionSelect" aria-label="Chọn ca thi" disabled>
+                <option value="">Chọn ca thi</option>
+            </select>
+        </div>
+
         <section id="assignmentPanel" class="card hidden" style="margin-bottom:18px;">
             <div class="card-header">
                 <h3 id="assignmentTitle">Phân công giám thị</h3>
@@ -64,7 +73,9 @@
                         <th>Hành động</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr><td colspan="9"><div class="empty"><div class="icon">⏳</div><div>Đang tải danh sách giám thị...</div></div></td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -113,6 +124,6 @@
 
     <script src="js/api.js"></script>
     <script src="js/layout.js"></script>
-    <script src="js/proctors.js"></script>
+    <script src="js/proctors.js?v=20260926-assignment-options-3"></script>
 </body>
 </html>
