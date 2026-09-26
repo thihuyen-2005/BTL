@@ -26,9 +26,7 @@ public class ExamSessionService
     public async Task<List<CaThiResponseDto>> GetByKyThiAsync(
         int kyThiId, string? trangThai, string? keyword)
     {
-        var q = _db.CaThis
-            .Include(c => c.KyThi).Include(c => c.PhongThi)
-            .Where(c => c.KyThiId == kyThiId);
+        var q = _db.CaThis.Where(c => c.KyThiId == kyThiId);
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -44,11 +42,36 @@ public class ExamSessionService
         if (!string.IsNullOrEmpty(trangThai) &&
             Enum.TryParse<TrangThaiCaThi>(trangThai, out var tt))
         {
-            q = q.Where(c => c.TrangThai == tt);
+            q = tt == TrangThaiCaThi.Du_kien
+                ? q.Where(c => c.TrangThai == TrangThaiCaThi.Du_kien || c.TrangThai == TrangThaiCaThi.Cho_xep)
+                : q.Where(c => c.TrangThai == tt);
         }
 
-        return await q.OrderBy(c => c.ThoiGianBatDau)
-            .Select(c => ToDto(c)).ToListAsync();
+        var sessions = await q.OrderBy(c => c.ThoiGianBatDau)
+            .Select(c => new
+            {
+                c.CaThiId,
+                c.KyThiId,
+                MaKyThi = c.KyThi.MaKyThi,
+                TenKyThi = c.KyThi.TenKyThi,
+                c.PhongThiId,
+                MaPhong = c.PhongThi.MaPhong,
+                TenPhong = c.PhongThi.TenPhong,
+                c.ThoiGianBatDau,
+                c.ThoiGianKetThuc,
+                c.SucChua,
+                c.TrangThai,
+                c.GhiChu,
+                AssignedProctorCount = c.ProctorAssignments.Count(a =>
+                    a.Status == ProctorAssignmentStatus.Da_phan_cong)
+            })
+            .ToListAsync();
+
+        return sessions.Select(c => new CaThiResponseDto(
+            c.CaThiId, c.KyThiId, c.MaKyThi, c.TenKyThi,
+            c.PhongThiId, c.MaPhong, c.TenPhong,
+            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
+            c.TrangThai.ToString(), c.GhiChu, c.AssignedProctorCount)).ToList();
     }
 
     public async Task<CaThiResponseDto> CreateAsync(CaThiCreateDto dto, int userId, string ip)

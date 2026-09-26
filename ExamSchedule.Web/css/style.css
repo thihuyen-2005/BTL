@@ -330,34 +330,45 @@ table {
     min-width: 1700px;
 }
 #tblSessions {
-    min-width: 1260px;
+    width: 100%;
+    min-width: 0;
     table-layout: fixed;
 }
 #tblSessions th,
 #tblSessions td {
     text-align: center;
     vertical-align: middle;
+    padding: 9px 5px;
+    font-size: 12px;
 }
 #tblSessions th:nth-child(1),
-#tblSessions td:nth-child(1) { width: 54px; }
+#tblSessions td:nth-child(1) { width: 4%; }
 #tblSessions th:nth-child(2),
-#tblSessions td:nth-child(2) { width: 70px; }
+#tblSessions td:nth-child(2) { width: 5%; }
 #tblSessions th:nth-child(3),
-#tblSessions td:nth-child(3) { width: 190px; }
+#tblSessions td:nth-child(3) { width: 10%; }
 #tblSessions th:nth-child(4),
 #tblSessions td:nth-child(4),
 #tblSessions th:nth-child(5),
-#tblSessions td:nth-child(5) { width: 260px; }
+#tblSessions td:nth-child(5) { width: 14%; white-space: normal; }
+#tblSessions td:nth-child(4) { white-space: normal; }
 #tblSessions th:nth-child(6),
-#tblSessions td:nth-child(6) { width: 110px; }
+#tblSessions td:nth-child(6) { width: 7%; }
 #tblSessions th:nth-child(7),
-#tblSessions td:nth-child(7) { width: 150px; }
+#tblSessions td:nth-child(7) { width: 9%; }
+#tblSessions th:nth-child(8),
+#tblSessions td:nth-child(8) { width: 17%; }
 #tblSessions th:last-child,
 #tblSessions td:last-child {
-    width: 330px;
+    width: 20%;
 }
 .sessions-card {
-    overflow-x: auto;
+    overflow-x: hidden;
+}
+.session-assignment-action {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
 }
 th, td {
     padding: 13px 16px;
@@ -475,7 +486,7 @@ tbody tr:hover td.sticky-action {
 /* ============ ACTION BUTTONS ============ */
 td .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 #tblSessions td:last-child .actions-cell {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: center;
 }
 #tblExams {
@@ -807,6 +818,49 @@ label input:focus, label select:focus, label textarea:focus {
     grid-template-columns: 2fr 1fr;
     gap: 20px;
 }
+#recentExams { overflow-x: auto; }
+#recentExams table {
+    min-width: 800px;
+    table-layout: fixed;
+}
+#recentExams th,
+#recentExams td {
+    text-align: center;
+    white-space: normal;
+}
+#recentExams th:nth-child(1) { width: 12%; }
+#recentExams th:nth-child(2) { width: 26%; }
+#recentExams th:nth-child(3),
+#recentExams th:nth-child(4) { width: 18%; }
+#recentExams th:nth-child(5) { width: 16%; }
+#recentExams th:nth-child(6) { width: 10%; }
+.upcoming-sessions-card { margin-top: 20px; }
+.upcoming-sessions-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.upcoming-sessions-range {
+    color: var(--slate);
+    font-size: 13px;
+    white-space: nowrap;
+}
+.upcoming-sessions-table-wrap { overflow-x: auto; }
+#tblUpcomingSessions {
+    min-width: 760px;
+    table-layout: fixed;
+}
+#tblUpcomingSessions th,
+#tblUpcomingSessions td {
+    text-align: center;
+    white-space: normal;
+}
+#tblUpcomingSessions th:nth-child(1) { width: 34%; }
+#tblUpcomingSessions th:nth-child(2) { width: 12%; }
+#tblUpcomingSessions th:nth-child(3),
+#tblUpcomingSessions th:nth-child(4) { width: 18%; }
+#tblUpcomingSessions th:nth-child(5) { width: 8%; }
+#tblUpcomingSessions th:nth-child(6) { width: 10%; }
 
 .quick-actions { display: grid; gap: 10px; }
 .quick-actions a {

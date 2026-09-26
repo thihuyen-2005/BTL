@@ -35,6 +35,7 @@ builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<ExamSessionService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ExamStatusUpdater>();
+builder.Services.AddHostedService<ExamStatusBackgroundService>();
 builder.Services.AddScoped<ProctorService>();
 builder.Services.AddScoped<ThiSinhService>();
 builder.Services.AddScoped<XepLichService>();
@@ -63,7 +64,7 @@ builder.Services.AddAuthorization(opt =>
     opt.AddPolicy("CanManageExam", p => p.RequireRole("Admin", "CBKT"));
     opt.AddPolicy("CanViewExam",   p => p.RequireRole("Admin", "CBKT", "QuanLy"));
     opt.AddPolicy("CanApprove",    p => p.RequireRole("Admin", "QuanLy"));
-    opt.AddPolicy("CanViewReport", p => p.RequireRole("Admin", "QuanLy", "KeToan"));
+    opt.AddPolicy("CanViewReport", p => p.RequireRole("Admin", "QuanLy"));
     opt.AddPolicy("IsStudent",     p => p.RequireRole("SinhVien"));
 });
 
@@ -297,7 +298,7 @@ using (var scope = app.Services.CreateScope())
         VALUES ('20260923133609_AddProctorManagementGenerated', '8.0.0');");
 
     // 1) Đảm bảo đủ role
-    var requiredRoles = new[] { "Admin", "CBKT", "QuanLy", "KeToan", "SinhVien" };
+    var requiredRoles = new[] { "Admin", "CBKT", "QuanLy", "SinhVien" };
     foreach (var roleName in requiredRoles)
     {
         if (!db.Roles.Any(r => r.RoleName == roleName))
@@ -311,7 +312,6 @@ using (var scope = app.Services.CreateScope())
         (Username: "admin",    Password: "Admin@2026",  FullName: "Quản trị viên",     Email: "admin@example.com",   Role: "Admin"),
         (Username: "cbkt01",   Password: "Cbkt@2026",   FullName: "Nguyễn Văn Cường",   Email: "cbkt@example.com",    Role: "CBKT"),
         (Username: "quanly01", Password: "Quanly@2026", FullName: "Trần Thị Dương",  Email: "quanly@example.com",  Role: "QuanLy"),
-        (Username: "ketoan01", Password: "Ketoan@2026", FullName: "Lê Thu Hường",    Email: "ketoan@example.com",  Role: "KeToan"),
     };
 
     foreach (var s in adminSeeds)

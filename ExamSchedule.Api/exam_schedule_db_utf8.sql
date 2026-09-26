@@ -67,13 +67,12 @@ CREATE TABLE `app_users` (
 
 LOCK TABLES `app_users` WRITE;
 /*!40000 ALTER TABLE `app_users` DISABLE KEYS */;
-INSERT INTO `app_users` VALUES (12,'admin','$2a$11$KI4niluxlS.2RDqjrzB/vuEMaHDXsznAbwUz9M5qa6oBNJnmAD0vW','Quß║ún trß╗ï vi├¬n','admin@example.com',1,'tPwfdFDFFkWpHpuiLLgaIA==','2026-09-26 15:26:52.583352','2026-09-16 04:47:32.986511'),(13,'cbkt01','$2a$11$jxJGxh/38CMyMwlGxaCcpO9aULDD5W4KizDpKLxyJMFA1h3DLkQGK','Nguyß╗àn V─ân C╞░ß╗¥ng','cbkt@example.com',1,NULL,NULL,'2026-09-16 04:47:33.619868'),(14,'quanly01','$2a$11$dc3j1vmrvXhOdLO0rBgFzuMzGULM8Q6K.ll0H/RyGY1oJDQoaoBM6','Trß║ºn Thß╗ï D╞░╞íng','quanly@example.com',1,NULL,NULL,'2026-09-16 04:47:33.842535'),(15,'ketoan01','$2a$11$z0bEY3FE27JA02zTx4SsOuAz2/lHuqFeUltFvqV4a1nXv1zNNMuUa','L├¬ Thu H╞░ß╗¥ng','ketoan@example.com',1,NULL,NULL,'2026-09-16 04:47:34.058605');
+INSERT INTO `app_users` VALUES (12,'admin','$2a$11$KI4niluxlS.2RDqjrzB/vuEMaHDXsznAbwUz9M5qa6oBNJnmAD0vW','Quß║ún trß╗ï vi├¬n','admin@example.com',1,'tPwfdFDFFkWpHpuiLLgaIA==','2026-09-26 15:26:52.583352','2026-09-16 04:47:32.986511'),(13,'cbkt01','$2a$11$jxJGxh/38CMyMwlGxaCcpO9aULDD5W4KizDpKLxyJMFA1h3DLkQGK','Nguyß╗àn V─ân C╞░ß╗¥ng','cbkt@example.com',1,NULL,NULL,'2026-09-16 04:47:33.619868'),(14,'quanly01','$2a$11$dc3j1vmrvXhOdLO0rBgFzuMzGULM8Q6K.ll0H/RyGY1oJDQoaoBM6','Trß║ºn Thß╗ï D╞░╞íng','quanly@example.com',1,NULL,NULL,'2026-09-16 04:47:33.842535');
 UPDATE `app_users` SET `full_name` = CASE `username`
   WHEN 'admin' THEN 'Quản trị viên'
   WHEN 'cbkt01' THEN 'Nguyễn Văn Cường'
   WHEN 'quanly01' THEN 'Trần Thị Dương'
-  WHEN 'ketoan01' THEN 'Lê Thu Hường'
-END WHERE `username` IN ('admin', 'cbkt01', 'quanly01', 'ketoan01');
+END WHERE `username` IN ('admin', 'cbkt01', 'quanly01');
 /*!40000 ALTER TABLE `app_users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -236,7 +235,7 @@ CREATE TABLE `roles` (
 
 LOCK TABLES `roles` WRITE;
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'Admin'),(2,'CBKT'),(4,'KeToan'),(3,'QuanLy'),(5,'SinhVien');
+INSERT INTO `roles` VALUES (1,'Admin'),(2,'CBKT'),(3,'QuanLy'),(5,'SinhVien');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -14,6 +14,7 @@
                 <div class="title" id="kyThiTitle">Quản lý Ca thi</div>
                 <div class="subtitle">Thiết lập các ca thi cho kỳ thi</div>
             </div>
+            <a class="btn btn-ghost" href="exams.html">← Quay lại kỳ thi</a>
         </div>
 
         <div class="toolbar">
@@ -21,7 +22,6 @@
             <select id="filterStatus">
                 <option value="">Tất cả trạng thái</option>
                 <option value="Du_kien">Dự kiến</option>
-                <option value="Cho_xep">Chờ xếp</option>
                 <option value="Da_xep">Đã xếp</option>
                 <option value="Dong">Đã đóng</option>
                 <option value="Huy">Đã hủy</option>
@@ -29,6 +29,7 @@
             <div class="spacer"></div>
             <button class="btn btn-primary" id="btnSchedule">⚙️ Xếp lịch tự động</button>
             <button class="btn btn-primary" id="btnAdd">➕ Thêm ca thi</button>
+            <button class="btn btn-accent" id="btnAssignSelected" type="button" disabled>⚡ Phân công giám thị</button>
             <button class="btn btn-del" id="btnDeleteSelected" type="button" disabled>🗑️ Xóa đã chọn</button>
         </div>
 
@@ -37,13 +38,14 @@
                 <thead>
                     <tr>
                         <th class="checkbox-col"><input type="checkbox" id="selectAllRows" aria-label="Chọn tất cả"></th>
-                        <th style="width:60px;">ID</th>
+                        <th>ID</th>
                         <th>Phòng thi</th>
                         <th>Bắt đầu</th>
                         <th>Kết thúc</th>
-                        <th style="width:90px;">Sức chứa</th>
+                        <th>Sức chứa</th>
                         <th>Trạng thái</th>
-                        <th style="width:230px;">Hành động</th>
+                        <th>Phân công</th>
+                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody></tbody>

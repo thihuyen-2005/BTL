@@ -1,7 +1,7 @@
 const MENU = [
     { section: "Tổng quan" },
     { href: "dashboard.html",       icon: "🏠", label: "Trang chủ",       active: "dashboard",
-      roles: ["Admin", "CBKT", "QuanLy", "KeToan", "SinhVien"] },
+    roles: ["Admin", "CBKT", "QuanLy", "SinhVien"] },
 
     { section: "Quản lý" },
     { href: "exams.html",           icon: "📋", label: "Kỳ thi",           active: "exams",
@@ -21,11 +21,11 @@ const MENU = [
     { href: "#",                    icon: "🔍", label: "Tra cứu lịch thi", disabled: true, tag: "Sắp có",
       roles: ["Admin", "CBKT", "QuanLy", "SinhVien"] },
     { href: "#",                    icon: "📊", label: "Báo cáo thống kê", disabled: true, tag: "Sắp có",
-      roles: ["Admin", "QuanLy", "KeToan"] },
+    roles: ["Admin", "QuanLy"] },
 
     { section: "Tài khoản" },
     { href: "profile.html",         icon: "🔑", label: "Đổi mật khẩu",     active: "profile",
-      roles: ["Admin", "CBKT", "QuanLy", "KeToan", "SinhVien"] },
+    roles: ["Admin", "CBKT", "QuanLy", "SinhVien"] },
 ];
 
 function renderLayout(pageTitle, pageSubtitle) {

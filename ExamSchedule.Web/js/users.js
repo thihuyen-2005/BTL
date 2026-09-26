@@ -28,7 +28,7 @@ function renderUsers() {
 
     // Lọc theo vai trò
     if (roleFilter === "CANBO") {
-        const canboRoles = ["Admin", "CBKT", "QuanLy", "KeToan"];
+        const canboRoles = ["Admin", "CBKT", "QuanLy"];
         list = list.filter(u => u.roles.some(r => canboRoles.includes(r)));
     } else if (roleFilter === "SinhVien") {
         list = list.filter(u => u.roles.includes("SinhVien"));

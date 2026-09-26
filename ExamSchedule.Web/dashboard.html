@@ -66,7 +66,7 @@
                 </div>
                 <div style="padding:14px;">
                     <div class="quick-actions">
-                        <a href="exams.html">
+                        <a href="exams.html?action=create">
                             <div class="icon">➕</div>
                             <div>
                                 <div class="title">Tạo kỳ thi mới</div>
@@ -77,20 +77,48 @@
                             <div class="icon">🕐</div>
                             <div>
                                 <div class="title">Quản lý ca thi</div>
-                                <div class="desc">Xếp lịch và phòng thi</div>
+                                <div class="desc">Chọn kỳ thi để quản lý các ca</div>
                             </div>
                         </a>
-                        <a href="#" onclick="alert('Chức năng đang phát triển'); return false;">
+                        <a href="proctors.html">
                             <div class="icon">👤</div>
                             <div>
                                 <div class="title">Phân công giám thị</div>
-                                <div class="desc">Sắp có</div>
+                                <div class="desc">Quản lý giám thị và lịch coi thi</div>
                             </div>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+
+        <section class="card upcoming-sessions-card">
+            <div class="card-header">
+                <h3 id="upcomingSessionsTitle">Ca thi trong 2 tuần tới</h3>
+                <div class="upcoming-sessions-controls">
+                    <span id="upcomingSessionsRange" class="upcoming-sessions-range"></span>
+                    <button class="btn-sm btn-view" id="previousSessions" type="button" title="Hai tuần trước" aria-label="Hai tuần trước" disabled>←</button>
+                    <button class="btn-sm btn-view" id="nextSessions" type="button" title="Hai tuần tiếp theo" aria-label="Hai tuần tiếp theo">→</button>
+                </div>
+            </div>
+            <div class="upcoming-sessions-table-wrap">
+                <table id="tblUpcomingSessions">
+                    <thead>
+                        <tr>
+                            <th>Kỳ thi</th>
+                            <th>Phòng</th>
+                            <th>Bắt đầu</th>
+                            <th>Kết thúc</th>
+                            <th>Sức chứa</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6"><div class="empty"><div>Đang tải ca thi...</div></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
     <script src="js/api.js"></script>

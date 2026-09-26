@@ -69,7 +69,6 @@ public class XepLichService
             registration.NgayCapNhat = DateTime.UtcNow;
             occupied[selected.CaThiId] = occupied.GetValueOrDefault(selected.CaThiId) + 1;
             existingSchedules.Add(registration);
-            selected.TrangThai = TrangThaiCaThi.Da_xep;
         }
 
         exam.TrangThai = TrangThaiKyThi.DangLapLich;

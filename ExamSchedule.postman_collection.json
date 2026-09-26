@@ -142,50 +142,6 @@
       "response": []
     },
     {
-      "name": "4. Login kt",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "const res = pm.response.json();\r\nif (res.accessToken) {\r\n    pm.environment.set(\"token_cbkt\", res.accessToken);\r\n}"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "noauth"
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"username\": \"ketoan01\",\r\n  \"password\": \"Ketoan@2026\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:5000/api/auth/login",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "5000",
-          "path": [
-            "api",
-            "auth",
-            "login"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "5. Test 403",
       "protocolProfileBehavior": {
         "disableBodyPruning": true

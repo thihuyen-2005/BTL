@@ -105,6 +105,11 @@ document.getElementById("btnAdd").onclick = () => {
     modal.classList.remove("hidden");
 };
 
+if (new URLSearchParams(location.search).get("action") === "create") {
+    document.getElementById("btnAdd").click();
+    history.replaceState({}, "", location.pathname);
+}
+
 document.getElementById("btnCancel").onclick = () => modal.classList.add("hidden");
 
 window.editExam = async function(id) {

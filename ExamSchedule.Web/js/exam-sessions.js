@@ -11,16 +11,19 @@ const tbody = document.querySelector("#tblSessions tbody");
 const modal = document.getElementById("modal");
 const form = document.getElementById("formSession");
 const selectAll = document.getElementById("selectAllRows");
+const assignSelectedBtn = document.getElementById("btnAssignSelected");
 const deleteSelectedBtn = document.getElementById("btnDeleteSelected");
 let searchTimer;
 let editingSessionId = null;
 let selectedSessionIds = new Set();
+let shouldReloadSessionsOnReturn = false;
 
 function syncSelectedRows() {
     selectedSessionIds = new Set([...document.querySelectorAll('.session-row-select:checked')].map(item => Number(item.dataset.id)));
     const rows = [...document.querySelectorAll('.session-row-select')];
     const allSelected = rows.length > 0 && rows.every(item => item.checked);
     selectAll.checked = allSelected;
+    assignSelectedBtn.disabled = selectedSessionIds.size === 0;
     deleteSelectedBtn.disabled = selectedSessionIds.size === 0;
 }
 
@@ -36,6 +39,7 @@ document.getElementById("btnSchedule").onclick = async () => {
 };
 
 async function loadSessions() {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="icon">⏳</div><div>Đang tải các ca thi...</div></div></td></tr>`;
     try {
         const status = document.getElementById("filterStatus").value;
         const keyword = document.getElementById("search").value.trim();
@@ -71,8 +75,13 @@ async function loadSessions() {
                 <td>${c.sucChua}</td>
                 <td><span class="badge ${c.trangThai}">${trangThaiCaThiLabel(c.trangThai)}</span></td>
                 <td>
+                    ${c.trangThai === "Huy"
+                        ? `<span class="badge Huy">Không thể phân công</span>`
+                                : `<span class="badge ${c.assignedProctorCount ? "Da_xep" : "Cho_xep"}">${c.assignedProctorCount ? "Đã phân công" : "Chưa phân công"}</span>
+                                    <a class="session-assignment-action" href="proctors.html?kyThiId=${kyThiId}&caThiId=${c.caThiId}">${c.assignedProctorCount ? "Phân công lại" : "Phân công"}</a>`}
+                </td>
+                <td>
                     <div class="actions-cell">
-                        <a class="btn-sm btn-view" href="proctors.html?kyThiId=${kyThiId}&caThiId=${c.caThiId}">👤 Phân công</a>
                         <button class="btn-sm btn-edit" onclick="editSession(${c.caThiId})">✏️ Sửa</button>
                         <button class="btn-sm btn-del" onclick="deleteSession(${c.caThiId})">🗑️ Xóa</button>
                         <button class="btn-sm btn-view" onclick="cancelSession(${c.caThiId})">⛔ Hủy</button>
@@ -95,7 +104,7 @@ function formatDateTime(iso) {
 function trangThaiCaThiLabel(tt) {
     const map = {
         Du_kien: "Dự kiến",
-        Cho_xep: "Chờ xếp",
+        Cho_xep: "Dự kiến",
         Da_xep:  "Đã xếp",
         Dong:    "Đã đóng",
         Huy:     "Đã hủy"
@@ -196,6 +205,71 @@ tbody.addEventListener("change", (event) => {
     }
 });
 
+function markSessionAssigned(id) {
+    const checkbox = [...tbody.querySelectorAll(".session-row-select")]
+        .find(item => Number(item.dataset.id) === id);
+    if (!checkbox) return;
+
+    const row = checkbox.closest("tr");
+    row.cells[6].innerHTML = `<span class="badge Da_xep">Đã xếp</span>`;
+    row.cells[7].innerHTML = `<span class="badge Da_xep">Đã phân công</span><a class="session-assignment-action" href="proctors.html?kyThiId=${kyThiId}&caThiId=${id}">Phân công lại</a>`;
+    checkbox.checked = false;
+}
+
+assignSelectedBtn.onclick = async () => {
+    if (!selectedSessionIds.size) return;
+    const selectedRows = [...tbody.querySelectorAll(".session-row-select:checked")].map(checkbox => {
+        const row = checkbox.closest("tr");
+        const status = row.cells[6].querySelector(".badge")?.classList;
+        const assignmentStatus = row.cells[7].querySelector(".badge")?.classList;
+        return {
+            checkbox,
+            id: Number(checkbox.dataset.id),
+            status,
+            alreadyAssigned: status?.contains("Da_xep") || assignmentStatus?.contains("Da_xep"),
+            unavailable: status?.contains("Huy") || status?.contains("Dong")
+        };
+    });
+    const skipped = selectedRows.filter(row => row.alreadyAssigned || row.unavailable);
+    const eligible = selectedRows.filter(row => !row.alreadyAssigned && !row.unavailable);
+    const ids = eligible.map(row => row.id);
+
+    if (!ids.length) {
+        skipped.forEach(row => row.checkbox.checked = false);
+        syncSelectedRows();
+        toast(`Không có ca cần phân công; đã bỏ qua ${skipped.length} ca đã xếp, đóng hoặc hủy.`, "success");
+        return;
+    }
+    if (!confirm(`Tự động phân công giám thị cho ${ids.length} ca chưa xếp? Sẽ bỏ qua ${skipped.length} ca đã xếp, đóng hoặc hủy.`)) return;
+
+    skipped.forEach(row => row.checkbox.checked = false);
+
+    assignSelectedBtn.disabled = true;
+    const originalLabel = assignSelectedBtn.textContent;
+    const assigned = [];
+    const failed = [];
+    for (let index = 0; index < ids.length; index++) {
+        const id = ids[index];
+        assignSelectedBtn.textContent = `Đang xếp ${index + 1}/${ids.length}...`;
+        try {
+            await apiFetch(`/proctors/sessions/${id}/auto-assign`, { method: "POST" });
+            assigned.push(id);
+            markSessionAssigned(id);
+        } catch (error) {
+            failed.push({ id, message: error.message });
+        }
+    }
+
+    assignSelectedBtn.textContent = originalLabel;
+    syncSelectedRows();
+    if (failed.length) {
+        const details = failed.map(item => `#${item.id}: ${item.message}`).join("; ");
+        toast(`Đã xếp giám thị cho ${assigned.length}/${ids.length} ca; bỏ qua ${skipped.length}. ${details}`, "error");
+    } else {
+        toast(`Đã xếp giám thị cho ${assigned.length} ca; bỏ qua ${skipped.length} ca đã xếp, đóng hoặc hủy.`, "success");
+    }
+};
+
 deleteSelectedBtn.onclick = async () => {
     if (!selectedSessionIds.size) return;
     const ids = [...selectedSessionIds];
@@ -217,5 +291,15 @@ document.getElementById("search").oninput = () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(loadSessions, 200);
 };
+
+window.addEventListener("pagehide", () => {
+    shouldReloadSessionsOnReturn = true;
+});
+
+window.addEventListener("pageshow", () => {
+    if (!shouldReloadSessionsOnReturn) return;
+    shouldReloadSessionsOnReturn = false;
+    loadSessions();
+});
 
 loadSessions();

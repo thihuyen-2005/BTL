@@ -10,11 +10,13 @@ public class ProctorService
 {
     private readonly AppDbContext _db;
     private readonly AuditService _audit;
+    private readonly ExamStatusUpdater _statusUpdater;
 
-    public ProctorService(AppDbContext db, AuditService audit)
+    public ProctorService(AppDbContext db, AuditService audit, ExamStatusUpdater statusUpdater)
     {
         _db = db;
         _audit = audit;
+        _statusUpdater = statusUpdater;
     }
 
     public async Task<List<ProctorListItemDto>> GetProctorsAsync(
@@ -105,6 +107,7 @@ public class ProctorService
         _db.ProctorProfiles.Remove(profile);
         await _db.SaveChangesAsync();
         await _audit.LogAsync(actorId, "DELETE", "PROCTOR_PROFILE", profileId, profile, null, ip);
+        await _statusUpdater.UpdateAllAsync();
     }
 
     public async Task<ProctorAssignmentDto> GetAssignmentAsync(int assignmentId)
@@ -139,6 +142,7 @@ public class ProctorService
         await _audit.LogAsync(actorId, "ASSIGN_PROCTOR", "PROCTOR_ASSIGNMENT",
             assignment.ProctorAssignmentId, null, assignment, ip);
         await transaction.CommitAsync();
+        await _statusUpdater.UpdateAllAsync();
 
         await _db.Entry(assignment).Reference(a => a.ProctorProfile).LoadAsync();
         return ToDto(assignment);
@@ -161,6 +165,7 @@ public class ProctorService
         await _audit.LogAsync(actorId, "UNASSIGN_PROCTOR", "PROCTOR_ASSIGNMENT",
             assignmentId, old, null, ip);
         await transaction.CommitAsync();
+        await _statusUpdater.UpdateAllAsync();
     }
 
     public async Task<ProctorAssignmentDto> ReplaceAsync(
@@ -185,6 +190,7 @@ public class ProctorService
         await _audit.LogAsync(actorId, "REPLACE_PROCTOR", "PROCTOR_ASSIGNMENT",
             assignmentId, old, oldAssignment, ip);
         await transaction.CommitAsync();
+        await _statusUpdater.UpdateAllAsync();
 
         await _db.Entry(oldAssignment).Reference(a => a.ProctorProfile).LoadAsync();
         return ToDto(oldAssignment);
@@ -264,6 +270,7 @@ public class ProctorService
             await _audit.LogAsync(actorId, "AUTO_ASSIGN_PROCTOR", "PROCTOR_ASSIGNMENT",
                 assignment.ProctorAssignmentId, null, assignment, ip);
         await transaction.CommitAsync();
+        await _statusUpdater.UpdateAllAsync();
 
         var result = await _db.ProctorAssignments.AsNoTracking()
             .Include(a => a.ProctorProfile)
