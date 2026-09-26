@@ -21,7 +21,7 @@ public class XepLichService
 
         var scheduledElsewhere = (await _db.DangKyThis
             .AsNoTracking()
-            .Where(x => x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue && x.KyThiId != kyThiId)
+            .Where(x => x.CaThiId.HasValue && x.KyThiId != kyThiId)
             .Select(x => x.ThiSinhId)
             .Distinct()
             .ToListAsync())

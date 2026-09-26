@@ -67,7 +67,7 @@ public class ThiSinhService
             .AsNoTracking()
             .Include(x => x.KyThi)
             .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
-            .Where(x => studentIds.Contains(x.ThiSinhId) && x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue)
+            .Where(x => studentIds.Contains(x.ThiSinhId) && x.CaThiId.HasValue)
             .OrderByDescending(x => x.NgayCapNhat ?? x.NgayDangKy)
             .ToListAsync();
 
@@ -114,6 +114,25 @@ public class ThiSinhService
     public async Task NormalizeDataIntegrityAsync()
     {
         var candidates = await _db.ThiSinhs.OrderBy(x => x.ThiSinhId).ToListAsync();
+
+        var invalidScheduledRegistrations = await _db.DangKyThis
+            .Where(x => x.CaThiId.HasValue && x.TrangThai != TrangThaiDangKyThi.DaXep)
+            .ToListAsync();
+        foreach (var registration in invalidScheduledRegistrations)
+        {
+            registration.TrangThai = TrangThaiDangKyThi.DaXep;
+            registration.NgayCapNhat = DateTime.UtcNow;
+        }
+
+        var invalidUnscheduledRegistrations = await _db.DangKyThis
+            .Where(x => !x.CaThiId.HasValue && x.TrangThai == TrangThaiDangKyThi.DaXep)
+            .ToListAsync();
+        foreach (var registration in invalidUnscheduledRegistrations)
+        {
+            registration.TrangThai = TrangThaiDangKyThi.ChoXep;
+            registration.LyDoChuaXep = null;
+            registration.NgayCapNhat = DateTime.UtcNow;
+        }
 
         var usedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates)
@@ -347,7 +366,6 @@ public class ThiSinhService
 
         var hasScheduledInAnotherExam = await _db.DangKyThis.AnyAsync(x =>
             x.ThiSinhId == candidate.ThiSinhId &&
-            x.TrangThai == TrangThaiDangKyThi.DaXep &&
             x.CaThiId.HasValue &&
             x.KyThiId != dto.KyThiId);
         if (hasScheduledInAnotherExam)
@@ -380,7 +398,7 @@ public class ThiSinhService
     {
         var scheduledElsewhere = (await _db.DangKyThis
             .AsNoTracking()
-            .Where(x => x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue && x.KyThiId != kyThiId)
+            .Where(x => x.CaThiId.HasValue && x.KyThiId != kyThiId)
             .Select(x => x.ThiSinhId)
             .Distinct()
             .ToListAsync())
@@ -417,7 +435,7 @@ public class ThiSinhService
             if (registrationMap.TryGetValue(student.ThiSinhId, out var reg))
             {
                 var paid = student.SoTien.HasValue && student.SoTien.Value >= MucNopToiThieu;
-                var alreadyScheduled = reg.CaThiId.HasValue && reg.TrangThai == TrangThaiDangKyThi.DaXep;
+                var alreadyScheduled = reg.CaThiId.HasValue;
                 var canSchedule = paid && !alreadyScheduled;
 
                 result.Add(new ThiSinhScheduleCandidateDto(
@@ -485,7 +503,6 @@ public class ThiSinhService
 
         var scheduledInOtherExam = await _db.DangKyThis
             .Where(x => distinctIds.Contains(x.ThiSinhId) &&
-                x.TrangThai == TrangThaiDangKyThi.DaXep &&
                 x.CaThiId.HasValue &&
                 x.KyThiId != kyThiId)
             .Select(x => x.ThiSinhId)

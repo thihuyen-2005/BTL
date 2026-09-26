@@ -223,10 +223,10 @@ async function loadCandidates() {
 }
 
 function getSchedulingEligibilityStatus(student) {
-    const amount = Number(student.soTien ?? 0);
-    if (student.trangThaiXepLich === "Xem lịch") {
+    if (student.trangThaiXepLich === "Xem lịch" || student.caThiId != null) {
         return { label: "Xem lịch", className: "status-success" };
     }
+    const amount = Number(student.soTien ?? 0);
     if (!student.soTien || Number.isNaN(amount) || amount < 800) {
         return { label: "Chưa đủ điều kiện xếp lịch", className: "status-warning" };
     }
