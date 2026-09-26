@@ -407,25 +407,72 @@ tbody tr:last-child td { border-bottom: none; }
 .table-scroll .card {
     overflow: visible;
 }
-.table-card {
-    min-width: 1200px;
+#manualScheduleTable {
+    min-width: 980px;
+    width: 100%;
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
 }
-.th-sticky,
-.sticky-action {
+
+#manualScheduleTable th,
+#manualScheduleTable td {
+    white-space: nowrap;
+    overflow: visible;
+}
+
+#manualScheduleTable th.sticky-status,
+#manualScheduleTable td.sticky-status {
     position: sticky;
-    right: 0;
+    right: 188px;
     background: var(--card);
     z-index: 3;
     box-shadow: -2px 0 0 var(--border);
+    min-width: 150px;
 }
-thead .sticky-action {
-    background: var(--bg-2);
+
+#manualScheduleTable th.sticky-session,
+#manualScheduleTable td.sticky-session {
+    position: sticky;
+    right: 100px;
+    background: var(--card);
+    z-index: 3;
+    box-shadow: -2px 0 0 var(--border);
+    min-width: 120px;
+}
+
+#manualScheduleTable th.sticky-action,
+#manualScheduleTable td.sticky-action {
+    position: sticky;
+    right: 0;
+    background: var(--card);
     z-index: 4;
+    box-shadow: -2px 0 0 var(--border);
+    min-width: 150px;
 }
-tbody tr:hover .sticky-action,
-tbody tr:hover td.sticky-action {
+
+#manualScheduleTable th.sticky-status,
+#manualScheduleTable td.sticky-status,
+#manualScheduleTable th.sticky-session,
+#manualScheduleTable td.sticky-session,
+#manualScheduleTable th.sticky-action,
+#manualScheduleTable td.sticky-action {
+    padding-right: 12px;
+}
+
+#manualScheduleTable thead th.sticky-status,
+#manualScheduleTable thead th.sticky-session,
+#manualScheduleTable thead th.sticky-action {
+    background: var(--bg-2);
+    z-index: 5;
+}
+
+#manualScheduleTable tbody tr:hover td.sticky-status,
+#manualScheduleTable tbody tr:hover td.sticky-session,
+#manualScheduleTable tbody tr:hover td.sticky-action {
     background: #fafbfd;
 }
+
 .sticky-action .actions-cell {
     display: flex;
     gap: 6px;

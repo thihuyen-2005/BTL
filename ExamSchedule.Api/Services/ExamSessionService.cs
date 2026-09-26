@@ -62,10 +62,6 @@ public class ExamSessionService
                 c.SucChua,
                 DaXep = c.DangKyThis.Count(registration =>
                     registration.TrangThai == TrangThaiDangKyThi.DaXep),
-                ChuaXep = _db.DangKyThis.Count(registration =>
-                    registration.KyThiId == c.KyThiId
-                    && registration.CaThiId == null
-                    && registration.TrangThai != TrangThaiDangKyThi.Huy),
                 c.TrangThai,
                 c.GhiChu,
                 AssignedProctorCount = c.ProctorAssignments.Count(a =>
@@ -73,12 +69,17 @@ public class ExamSessionService
             })
             .ToListAsync();
 
-        return sessions.Select(c => new CaThiResponseDto(
-            c.CaThiId, c.KyThiId, c.MaKyThi, c.TenKyThi,
-            c.PhongThiId, c.MaPhong, c.TenPhong,
-            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
-            c.DaXep, Math.Max(0, c.SucChua - c.DaXep), c.ChuaXep,
-            c.TrangThai.ToString(), c.GhiChu, c.AssignedProctorCount)).ToList();
+        return sessions.Select(c =>
+        {
+            var daXep = c.DaXep;
+            var conLai = Math.Max(0, c.SucChua - daXep);
+            return new CaThiResponseDto(
+                c.CaThiId, c.KyThiId, c.MaKyThi, c.TenKyThi,
+                c.PhongThiId, c.MaPhong, c.TenPhong,
+                c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
+                daXep, conLai, conLai,
+                c.TrangThai.ToString(), c.GhiChu, c.AssignedProctorCount);
+        }).ToList();
     }
 
     public async Task<CaThiResponseDto> CreateAsync(CaThiCreateDto dto, int userId, string ip)

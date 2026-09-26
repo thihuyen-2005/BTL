@@ -78,9 +78,10 @@ function renderSessionSummary() {
     }
 
     sessionSummary.classList.remove("empty");
+    const sucChua = Number(selectedSession.sucChua ?? 0);
     const daXep = Number(selectedSession.daXep ?? 0);
-    const conLai = Number(selectedSession.conLai ?? Math.max(0, Number(selectedSession.sucChua ?? 0) - daXep));
-    const chuaXep = Number(selectedSession.chuaXep ?? 0);
+    const conLai = Math.max(0, sucChua - daXep);
+    const chuaXep = conLai;
 
     sessionSummary.innerHTML = `
         <div class="small-label">Kỳ thi</div>
@@ -88,7 +89,7 @@ function renderSessionSummary() {
         <div class="small-label mt-8">Ca thi đang chọn</div>
         <div class="session-name">${selectedSession.maPhong || "Phòng thi"}</div>
         <div>${formatDateTime(selectedSession.thoiGianBatDau)} - ${formatDateTime(selectedSession.thoiGianKetThuc)}</div>
-        <div class="session-meta-row"><strong>Sức chứa:</strong> ${selectedSession.sucChua}</div>
+        <div class="session-meta-row"><strong>Sức chứa:</strong> ${sucChua}</div>
         <div class="session-meta-row"><strong>Đã xếp:</strong> ${daXep}</div>
         <div class="session-meta-row"><strong>Còn trống:</strong> ${conLai}</div>
         <div class="session-meta-row"><strong>Chưa xếp:</strong> ${chuaXep}</div>
@@ -109,12 +110,20 @@ function renderSelectedSummary() {
 function renderRegisteredTable() {
     const examId = Number(examSelect.value);
     const sessionId = Number(sessionSelect.value);
+    const summaryHeader = document.querySelector(".summary-header h3");
+    const summaryCount = document.getElementById("registeredCountBadge");
+
     if (!examId || !sessionId) {
         registeredTableBody.innerHTML = `<tr><td colspan="6" class="empty-cell">Chưa có thí sinh nào được đăng ký vào ca thi này.</td></tr>`;
+        if (summaryHeader) summaryHeader.textContent = "Thí sinh đã đăng ký của ca hiện tại";
+        if (summaryCount) summaryCount.textContent = "0";
         return;
     }
 
     const registered = candidates.filter((candidate) => Number(candidate.caThiId) === sessionId && candidate.caThiId != null);
+    if (summaryHeader) summaryHeader.textContent = `Thí sinh đã đăng ký của ca hiện tại`;
+    if (summaryCount) summaryCount.textContent = String(registered.length);
+
     if (!registered.length) {
         registeredTableBody.innerHTML = `<tr><td colspan="6" class="empty-cell">Ca thi đang chọn chưa có thí sinh nào được xếp lịch.</td></tr>`;
         return;
@@ -149,7 +158,7 @@ function renderTable() {
     });
 
     if (!filtered.length) {
-        tableBody.innerHTML = `<tr><td colspan="10" class="empty-cell">Chưa có thí sinh nào được xếp lịch trong ca thi này.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" class="empty-cell">Chưa có thí sinh nào được xếp lịch trong ca thi này.</td></tr>`;
         selectAllRows.checked = false;
         return;
     }
@@ -163,12 +172,11 @@ function renderTable() {
                 <td>${candidate.maThiSinh || "—"}</td>
                 <td>${candidate.hoTen || "—"}</td>
                 <td>${candidate.lop || "—"}</td>
-                <td>${candidate.khoa || "—"}</td>
                 <td>${candidate.nganhHoc || "—"}</td>
                 <td>${formatMoney(candidate.soTien)}</td>
-                <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
-                <td>Chưa có ca</td>
-                <td>
+                <td class="sticky-status"><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
+                <td class="sticky-session">Chưa có ca</td>
+                <td class="sticky-action">
                     <div class="actions-cell compact-row">
                         <button class="btn btn-small btn-primary" type="button" data-assign-id="${candidate.thiSinhId}" ${disabled}>Xếp</button>
                         <button class="btn btn-small btn-del" type="button" data-remove-id="${candidate.thiSinhId}" disabled>Bỏ xếp</button>
