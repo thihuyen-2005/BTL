@@ -62,13 +62,30 @@ public class ThiSinhService
                 .Where(x => x.NganhHoc == normalizedNganh || AcademicCatalog.NormalizeNganhHoc(x.Khoa, x.NganhHoc) == normalizedNganh)
                 .ToList();
 
+        var studentIds = items.Select(x => x.ThiSinhId).ToList();
+        var scheduleByStudent = await _db.DangKyThis
+            .AsNoTracking()
+            .Include(x => x.KyThi)
+            .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
+            .Where(x => studentIds.Contains(x.ThiSinhId) && x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue)
+            .OrderByDescending(x => x.NgayCapNhat ?? x.NgayDangKy)
+            .ToListAsync();
+
         return items
             .OrderBy(x => RemoveDiacritics(x.HoTen ?? string.Empty))
             .ThenBy(x => x.HoTen ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-            .Select(x => new ThiSinhResponseDto(
-                x.ThiSinhId, x.MaThiSinh, x.HoTen, x.NgaySinh, x.GioiTinh,
-                x.DanToc, x.NoiSinh, x.QuocTich, x.SoCccdHoChieu,
-                x.SoDienThoai, x.Lop, x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan))
+            .Select(x =>
+            {
+                var schedule = scheduleByStudent.FirstOrDefault(s => s.ThiSinhId == x.ThiSinhId);
+                var status = schedule != null ? "Xem lịch" : (DaNop(x.SoTien) ? "Chờ xếp lịch" : "Chưa đủ điều kiện");
+                return new ThiSinhResponseDto(
+                    x.ThiSinhId, x.MaThiSinh, x.HoTen, x.NgaySinh, x.GioiTinh,
+                    x.DanToc, x.NoiSinh, x.QuocTich, x.SoCccdHoChieu,
+                    x.SoDienThoai, x.Lop, x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan,
+                    status, schedule?.KyThiId, schedule?.KyThi?.MaKyThi,
+                    schedule?.CaThiId, schedule?.CaThi?.ThoiGianBatDau,
+                    schedule?.CaThi?.ThoiGianKetThuc, schedule?.CaThi?.PhongThi?.MaPhong);
+            })
             .ToList();
     }
 
@@ -328,6 +345,14 @@ public class ThiSinhService
         if (await _db.DangKyThis.AnyAsync(x => x.ThiSinhId == candidate.ThiSinhId && x.KyThiId == dto.KyThiId))
             throw new BusinessException("Thí sinh đã đăng ký kỳ thi này.");
 
+        var hasScheduledInAnotherExam = await _db.DangKyThis.AnyAsync(x =>
+            x.ThiSinhId == candidate.ThiSinhId &&
+            x.TrangThai == TrangThaiDangKyThi.DaXep &&
+            x.CaThiId.HasValue &&
+            x.KyThiId != dto.KyThiId);
+        if (hasScheduledInAnotherExam)
+            throw new BusinessException("Thí sinh đã được xếp lịch vào một kỳ thi khác. Chỉ được xếp lịch ở 1 kỳ thi.");
+
         var hasPaid = DaNop(candidate.SoTien);
         var registration = new DangKyThi
         {
@@ -353,6 +378,14 @@ public class ThiSinhService
 
     public async Task<List<ThiSinhScheduleCandidateDto>> GetManualScheduleCandidatesAsync(int kyThiId)
     {
+        var scheduledElsewhere = (await _db.DangKyThis
+            .AsNoTracking()
+            .Where(x => x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue && x.KyThiId != kyThiId)
+            .Select(x => x.ThiSinhId)
+            .Distinct()
+            .ToListAsync())
+            .ToHashSet();
+
         var examRegistrations = await _db.DangKyThis
             .AsNoTracking()
             .Where(x => x.KyThiId == kyThiId)
@@ -373,7 +406,7 @@ public class ThiSinhService
 
         var eligibleStudents = await _db.ThiSinhs
             .AsNoTracking()
-            .Where(x => x.SoTien.HasValue && x.SoTien.Value >= MucNopToiThieu)
+            .Where(x => x.SoTien.HasValue && x.SoTien.Value >= MucNopToiThieu && !scheduledElsewhere.Contains(x.ThiSinhId))
             .OrderBy(x => x.HoTen)
             .ThenBy(x => x.ThiSinhId)
             .ToListAsync();
@@ -449,6 +482,23 @@ public class ThiSinhService
 
         if (students.Count != distinctIds.Count)
             throw new BusinessException("Một số thí sinh không tồn tại trong hệ thống.");
+
+        var scheduledInOtherExam = await _db.DangKyThis
+            .Where(x => distinctIds.Contains(x.ThiSinhId) &&
+                x.TrangThai == TrangThaiDangKyThi.DaXep &&
+                x.CaThiId.HasValue &&
+                x.KyThiId != kyThiId)
+            .Select(x => x.ThiSinhId)
+            .Distinct()
+            .ToListAsync();
+        if (scheduledInOtherExam.Count > 0)
+        {
+            var names = await _db.ThiSinhs
+                .Where(x => scheduledInOtherExam.Contains(x.ThiSinhId))
+                .Select(x => x.HoTen)
+                .ToListAsync();
+            throw new BusinessException($"Các thí sinh đã có lịch ở kỳ thi khác: {string.Join(", ", names)}. Chỉ được xếp lịch ở 1 kỳ thi.");
+        }
 
         var registrations = await _db.DangKyThis
             .Include(x => x.ThiSinh)
@@ -574,7 +624,8 @@ public class ThiSinhService
     private static ThiSinhResponseDto ToDto(ThiSinh x) => new(
         x.ThiSinhId, x.MaThiSinh, x.HoTen, x.NgaySinh, x.GioiTinh, x.DanToc,
         x.NoiSinh, x.QuocTich, x.SoCccdHoChieu, x.SoDienThoai, x.Lop,
-        x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan);
+        x.NganhHoc, x.Khoa, x.SoTien, x.EmailCaNhan,
+        "Chờ xếp lịch", null, null, null, null, null, null);
 
     private static string NormalizeCode(string? code)
     {

@@ -19,6 +19,14 @@ public class XepLichService
         if (exam.TrangThai is TrangThaiKyThi.KetThuc or TrangThaiKyThi.Huy)
             throw new BusinessException("Kỳ thi đã kết thúc hoặc bị hủy.");
 
+        var scheduledElsewhere = (await _db.DangKyThis
+            .AsNoTracking()
+            .Where(x => x.TrangThai == TrangThaiDangKyThi.DaXep && x.CaThiId.HasValue && x.KyThiId != kyThiId)
+            .Select(x => x.ThiSinhId)
+            .Distinct()
+            .ToListAsync())
+            .ToHashSet();
+
         var registrations = await _db.DangKyThis
             .Include(x => x.ThiSinh)
             .Include(x => x.CaThi).ThenInclude(x => x!.PhongThi)
@@ -28,6 +36,15 @@ public class XepLichService
         var sessions = await _db.CaThis.Include(x => x.PhongThi)
             .Where(x => x.KyThiId == kyThiId && x.TrangThai != TrangThaiCaThi.Dong && x.TrangThai != TrangThaiCaThi.Huy)
             .OrderBy(x => x.ThoiGianBatDau).ToListAsync();
+
+        foreach (var registration in registrations.Where(x => scheduledElsewhere.Contains(x.ThiSinhId)))
+        {
+            registration.CaThiId = null;
+            registration.CaThi = null;
+            registration.TrangThai = TrangThaiDangKyThi.ChoXep;
+            registration.LyDoChuaXep = "Thí sinh đã được xếp lịch ở kỳ thi khác. Chỉ được xếp lịch ở 1 kỳ thi.";
+            registration.NgayCapNhat = DateTime.UtcNow;
+        }
 
         foreach (var registration in registrations.Where(x => !x.ThiSinh.SoTien.HasValue || x.ThiSinh.SoTien.Value < 800m))
         {
