@@ -243,9 +243,11 @@ public class ExamSessionService
 
     private static CaThiResponseDto ToDto(CaThi c, int daXep, int chuaXep) {
         var conLai = Math.Max(0, c.SucChua - daXep);
-        return new(c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
+        return new CaThiResponseDto(
+            c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
             c.PhongThiId, c.PhongThi?.MaPhong ?? "", c.PhongThi?.TenPhong ?? "",
-            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua, daXep, conLai, chuaXep,
-            c.TrangThai.ToString(), c.GhiChu);
+            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
+            daXep, conLai, chuaXep,
+            c.TrangThai.ToString(), c.GhiChu, 0);
     }
 }

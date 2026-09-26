@@ -125,7 +125,6 @@ python3 -m http.server 8080 --bind 0.0.0.0
 ## 8) Script đã có sẵn để chạy nhanh
 
 ### Chạy cả 2 cùng lúc
-```
 
 ### Dừng cả 2
 

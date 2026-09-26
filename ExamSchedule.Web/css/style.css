@@ -985,11 +985,11 @@ label input:focus, label select:focus, label textarea:focus {
     order: 1;
 }
 
-.manual-schedule-main > .wide-result-table {
+.manual-schedule-main > .summary-panel {
     order: 2;
 }
 
-.manual-schedule-main > .summary-panel {
+.manual-schedule-main > .wide-result-table {
     order: 3;
 }
 

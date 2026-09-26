@@ -110,13 +110,13 @@ function renderRegisteredTable() {
     const examId = Number(examSelect.value);
     const sessionId = Number(sessionSelect.value);
     if (!examId || !sessionId) {
-        registeredTableBody.innerHTML = `<tr><td colspan="7" class="empty-cell">Chưa có thí sinh nào được đăng ký vào ca thi này.</td></tr>`;
+        registeredTableBody.innerHTML = `<tr><td colspan="6" class="empty-cell">Chưa có thí sinh nào được đăng ký vào ca thi này.</td></tr>`;
         return;
     }
 
     const registered = candidates.filter((candidate) => Number(candidate.caThiId) === sessionId && candidate.caThiId != null);
     if (!registered.length) {
-        registeredTableBody.innerHTML = `<tr><td colspan="7" class="empty-cell">Ca thi đang chọn chưa có thí sinh nào được xếp lịch.</td></tr>`;
+        registeredTableBody.innerHTML = `<tr><td colspan="6" class="empty-cell">Ca thi đang chọn chưa có thí sinh nào được xếp lịch.</td></tr>`;
         return;
     }
 
@@ -125,7 +125,6 @@ function renderRegisteredTable() {
             <td>${candidate.maThiSinh || "—"}</td>
             <td>${candidate.hoTen || "—"}</td>
             <td>${candidate.lop || "—"}</td>
-            <td>${candidate.khoa || "—"}</td>
             <td>${candidate.nganhHoc || "—"}</td>
             <td>${formatMoney(candidate.soTien)}</td>
             <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
