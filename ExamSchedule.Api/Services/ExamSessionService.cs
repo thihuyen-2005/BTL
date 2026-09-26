@@ -114,7 +114,7 @@ public class ExamSessionService
         await _audit.LogAsync(userId, "CREATE", "CA_THI", ca.CaThiId, null, ca, ip);
         await _statusUpdater.UpdateAllAsync();
 
-        return ToDto(ca);
+        return ToDto(ca, 0, 0);
     }
 
     public async Task UpdateAsync(int id, CaThiUpdateDto dto, int userId, string ip)
@@ -234,9 +234,11 @@ public class ExamSessionService
             throw new BusinessException("Sức chứa phải lớn hơn 0.");
     }
 
-    private static CaThiResponseDto ToDto(CaThi c) =>
-        new(c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
+    private static CaThiResponseDto ToDto(CaThi c, int daXep, int chuaXep) {
+        var conLai = Math.Max(0, c.SucChua - daXep);
+        return new(c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
             c.PhongThiId, c.PhongThi?.MaPhong ?? "", c.PhongThi?.TenPhong ?? "",
-            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
+            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua, daXep, conLai, chuaXep,
             c.TrangThai.ToString(), c.GhiChu);
+    }
 }

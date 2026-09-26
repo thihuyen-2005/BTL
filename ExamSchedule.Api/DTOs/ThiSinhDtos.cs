@@ -28,7 +28,10 @@ public record ThiSinhResponseDto(
     int ThiSinhId, string MaThiSinh, string HoTen, DateTime? NgaySinh,
     string? GioiTinh, string? DanToc, string? NoiSinh, string? QuocTich,
     string? SoCccdHoChieu, string? SoDienThoai, string? Lop, string? NganhHoc,
-    string? Khoa, decimal? SoTien, string? EmailCaNhan);
+    string? Khoa, decimal? SoTien, string? EmailCaNhan,
+    string TrangThaiXepLich,
+    int? KyThiId, string? MaKyThi, int? CaThiId,
+    DateTime? ThoiGianBatDau, DateTime? ThoiGianKetThuc, string? MaPhong);
 
 public record DangKyThiCreateDto(string MaThiSinh, int KyThiId);
 

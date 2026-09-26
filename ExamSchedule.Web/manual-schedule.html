@@ -56,6 +56,32 @@
                     <button class="btn btn-ghost" id="refreshBtn" type="button">↻ Làm mới</button>
                 </div>
 
+                <div class="summary-panel card">
+                    <div class="summary-header">
+                        <h3>Thí sinh đã đăng ký của ca hiện tại</h3>
+                    </div>
+                    <div class="summary-scroll">
+                        <table id="registeredTable">
+                            <thead>
+                                <tr>
+                                    <th>Mã TS</th>
+                                    <th>Họ tên</th>
+                                    <th>Lớp</th>
+                                    <th>Khoa</th>
+                                    <th>Ngành</th>
+                                    <th>Học phí</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="empty-cell">Chưa có thí sinh nào được đăng ký vào ca thi này.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="table-scroll wide-result-table">
                     <div class="card table-card">
                         <table id="manualScheduleTable">
@@ -77,41 +103,12 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="summary-panel card">
-                    <div class="summary-header">
-                        <h3>Thông tin đã chọn để xếp</h3>
-                        <span id="selectedCountBadge" class="badge-count">0</span>
-                    </div>
-                    <div class="summary-scroll">
-                        <table id="selectedTable">
-                            <thead>
-                                <tr>
-                                    <th>Mã TS</th>
-                                    <th>Họ tên</th>
-                                    <th>Ngày sinh</th>
-                                    <th>Tên lớp</th>
-                                    <th>Khoa</th>
-                                    <th>Ngành</th>
-                                    <th>Học phí</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="9" class="empty-cell">Chưa có thí sinh nào được chọn.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </section>
         </div>
     </div>
 
-    <script src="js/api.js?v=20260925-1"></script>
-    <script src="js/layout.js?v=20260925-1"></script>
-    <script src="js/manual-schedule.js?v=20260925-1"></script>
+    <script src="js/api.js?v=20260926-1"></script>
+    <script src="js/layout.js?v=20260926-1"></script>
+    <script src="js/manual-schedule.js?v=20260926-1"></script>
 </body>
 </html>

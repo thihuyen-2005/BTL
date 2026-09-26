@@ -183,7 +183,12 @@ async function loadCandidates() {
         if (paidFilter === "unpaid") params.set("daNop", "false");
         const list = await apiFetch(`/thisinh?${params}`);
         candidates = [...list].sort((a, b) => normalizeVietnameseName(a.hoTen).localeCompare(normalizeVietnameseName(b.hoTen)));
-        tbody.innerHTML = candidates.length ? candidates.map(x => `
+        tbody.innerHTML = candidates.length ? candidates.map(x => {
+            const scheduleStatus = getSchedulingEligibilityStatus(x);
+            const scheduleHook = x.trangThaiXepLich === "Xem lịch" && x.kyThiId
+                ? `<button class="btn-link" type="button" onclick="viewStudentSchedule(${x.kyThiId}, ${x.caThiId ?? 0})">${scheduleStatus.label}</button>`
+                : `<span class="schedule-status ${scheduleStatus.className}">${scheduleStatus.label}</span>`;
+            return `
             <tr>
                 <td class="checkbox-col"><input class="row-select" type="checkbox" data-id="${x.thiSinhId}" ${selectedIds.has(x.thiSinhId) ? "checked" : ""}></td>
                 <td><strong>${x.maThiSinh || ""}</strong></td>
@@ -199,7 +204,7 @@ async function loadCandidates() {
                 <td>${x.khoa || ""}</td>
                 <td>${x.nganhHoc || ""}</td>
                 <td>${x.soTien == null ? "Chưa nộp" : Number(x.soTien).toLocaleString("vi-VN")}</td>
-                <td><span class="schedule-status ${getSchedulingEligibilityStatus(x).className}">${getSchedulingEligibilityStatus(x).label}</span></td>
+                <td>${scheduleHook}</td>
                 <td>${x.emailCaNhan || ""}</td>
                 <td class="sticky-action">
                     <div class="actions-cell">
@@ -208,7 +213,8 @@ async function loadCandidates() {
                         <button class="btn-sm btn-del" onclick="deleteCandidate(${x.thiSinhId})">Xóa</button>
                     </div>
                 </td>
-            </tr>`).join("") :
+            </tr>`;
+        }).join("") :
             `<tr><td colspan="17"><div class="empty">Chưa có thí sinh</div></td></tr>`;
         syncSelectedRows();
     } catch (error) {
@@ -217,6 +223,9 @@ async function loadCandidates() {
 }
 
 function getSchedulingEligibilityStatus(student) {
+    if (student.trangThaiXepLich === "Xem lịch" || student.caThiId != null) {
+        return { label: "Xem lịch", className: "status-success" };
+    }
     const amount = Number(student.soTien ?? 0);
     if (!student.soTien || Number.isNaN(amount) || amount < 800) {
         return { label: "Chưa đủ điều kiện xếp lịch", className: "status-warning" };
@@ -235,6 +244,13 @@ function openManualScheduleFromSelection() {
 
 function goToManualScheduleForStudent(studentId) {
     window.location.href = `manual-schedule.html?fromThiSinh=1`;
+}
+
+function viewStudentSchedule(kyThiId, caThiId) {
+    if (!kyThiId) return;
+    const params = new URLSearchParams({ kyThiId: String(kyThiId) });
+    if (caThiId) params.set("caThiId", String(caThiId));
+    window.location.href = `manual-schedule.html?${params.toString()}`;
 }
 
 document.getElementById("btnManualSchedule").onclick = openManualScheduleFromSelection;
