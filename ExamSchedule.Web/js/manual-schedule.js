@@ -63,6 +63,16 @@ function getSelectedExam() {
     return exams.find((exam) => Number(exam.kyThiId) === examId) || null;
 }
 
+function getCurrentSessionAssignedCount(selectedSession) {
+    if (!selectedSession) return 0;
+
+    const sessionId = Number(selectedSession.caThiId ?? 0);
+    const fromApi = Number(selectedSession.daXep ?? selectedSession.DaXep ?? 0);
+    const fromRegisteredList = candidates.filter((candidate) => Number(candidate.caThiId) === sessionId && candidate.caThiId != null).length;
+
+    return fromApi > 0 ? fromApi : fromRegisteredList;
+}
+
 function renderSessionSummary() {
     const selectedExam = getSelectedExam();
     const selectedSession = sessions.find((item) => String(item.caThiId) === sessionSelect.value);
@@ -79,7 +89,7 @@ function renderSessionSummary() {
 
     sessionSummary.classList.remove("empty");
     const sucChua = Number(selectedSession.sucChua ?? 0);
-    const daXep = Number(selectedSession.daXep ?? 0);
+    const daXep = getCurrentSessionAssignedCount(selectedSession);
     const conLai = Math.max(0, sucChua - daXep);
     const chuaXep = conLai;
 
