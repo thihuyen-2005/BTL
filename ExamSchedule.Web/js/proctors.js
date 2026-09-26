@@ -59,14 +59,12 @@ async function loadSessionsForExam(examId) {
         selectedCaThiId = effectiveId;
         sessionSelect.value = String(effectiveId);
         await loadAssignmentPanel();
-    } else if (sessions.length) {
-        selectedCaThiId = Number(sessions[0].caThiId);
-        sessionSelect.value = String(selectedCaThiId);
-        await loadAssignmentPanel();
-    } else {
-        selectedCaThiId = null;
-        assignmentPanel.classList.add("hidden");
+        return;
     }
+
+    selectedCaThiId = null;
+    sessionSelect.value = "";
+    assignmentPanel.classList.add("hidden");
 }
 
 async function loadProctors() {
@@ -95,7 +93,7 @@ async function loadAssignmentPanel() {
         apiFetch(`/proctors?caThiId=${selectedCaThiId}&status=active`)
     ]);
     document.getElementById("assignmentTitle").textContent = `Phân công giám thị: ${summary.maKyThi}`;
-    document.getElementById("assignmentInfo").textContent = `${formatDateTime(summary.start)} ${formatTime(summary.start)} - ${formatTime(summary.end)} · ${summary.tenPhong} · Đã phân công ${summary.assignedCount}/${summary.requiredCount}`;
+    document.getElementById("assignmentInfo").textContent = `${formatDateTime(summary.start)} ${formatTime(summary.start)} · ${summary.tenPhong} · Đã phân công ${summary.assignedCount}/${summary.requiredCount}`;
     candidates = available;
     const select = document.getElementById("proctorSelect");
     select.innerHTML = candidates.length
@@ -275,7 +273,7 @@ window.showSchedule = async function (profileId, fullName) {
             return;
         }
         scheduleBody.innerHTML = `<div class="card"><table><thead><tr><th>Kỳ thi</th><th>Thời gian</th><th>Phòng</th><th>Vai trò</th></tr></thead><tbody>${schedule.map(item => `
-            <tr><td>${escapeHtml(item.tenKyThi)}</td><td>${formatDateTime(item.start)} - ${formatTime(item.end)}</td><td>${escapeHtml(item.tenPhong)}</td><td>${roleLabel(item.role)}</td></tr>`).join("")}</tbody></table></div>`;
+            <tr><td>${escapeHtml(item.tenKyThi)}</td><td>${formatDateTime(item.start)} ${formatTime(item.start)}</td><td>${escapeHtml(item.tenPhong)}</td><td>${roleLabel(item.role)}</td></tr>`).join("")}</tbody></table></div>`;
     } catch (error) {
         scheduleBody.innerHTML = `<div class="empty"><div>${error.message}</div></div>`;
     }
@@ -339,9 +337,11 @@ examSelect.onchange = async () => {
         await loadProctors();
     } else {
         selectedCaThiId = null;
+        selectedProctorIds.clear();
         assignmentPanel.classList.add("hidden");
         sessionSelect.innerHTML = `<option value="">Chọn ca thi</option>`;
         history.replaceState({}, "", location.pathname);
+        await loadProctors();
     }
 };
 sessionSelect.onchange = async () => {
