@@ -9,7 +9,7 @@ const tableBody = document.querySelector("#manualScheduleTable tbody");
 const selectedTableBody = document.querySelector("#selectedTable tbody");
 const candidateSearch = document.getElementById("candidateSearch");
 const statusFilter = document.getElementById("statusFilter");
-const selectedCountBadge = document.getElementById("selectedCountBadge");
+const registeredTableBody = document.querySelector("#registeredTable tbody");
 const selectAllRows = document.getElementById("selectAllRows");
 
 let exams = [];
@@ -78,111 +78,106 @@ function renderSessionSummary() {
     }
 
     sessionSummary.classList.remove("empty");
+    const daXep = Number(selectedSession.daXep ?? 0);
+    const conLai = Number(selectedSession.conLai ?? Math.max(0, Number(selectedSession.sucChua ?? 0) - daXep));
+    const chuaXep = Number(selectedSession.chuaXep ?? 0);
+
     sessionSummary.innerHTML = `
         <div class="small-label">Kỳ thi</div>
         <div class="session-name">${selectedExam ? (selectedExam.tenKyThi || selectedExam.maKyThi || "Kỳ thi") : "Chưa chọn"}</div>
         <div class="small-label mt-8">Ca thi đang chọn</div>
         <div class="session-name">${selectedSession.maPhong || "Phòng thi"}</div>
         <div>${formatDateTime(selectedSession.thoiGianBatDau)} - ${formatDateTime(selectedSession.thoiGianKetThuc)}</div>
-        <div>Sức chứa: ${selectedSession.sucChua}</div>
+        <div class="session-meta-row"><strong>Sức chứa:</strong> ${selectedSession.sucChua}</div>
+        <div class="session-meta-row"><strong>Đã xếp:</strong> ${daXep}</div>
+        <div class="session-meta-row"><strong>Còn trống:</strong> ${conLai}</div>
+        <div class="session-meta-row"><strong>Chưa xếp:</strong> ${chuaXep}</div>
     `;
 }
 
 function renderSelectedSummary() {
-    const selected = getSelectedCandidates();
-    selectedCountBadge.textContent = String(selected.length);
+    // Bảng "Thông tin đã chọn để xếp" đã được bỏ khỏi giao diện.
+    // Giữ hàm này để không phá vỡ các handler cũ, nhưng không render ra màn hình.
+    if (selectedTableBody) {
+        selectedTableBody.innerHTML = `<tr><td colspan="9" class="empty-cell">Chưa có thí sinh nào được chọn.</td></tr>`;
+    }
+    if (registeredTableBody) {
+        renderRegisteredTable();
+    }
+}
 
-    if (!selected.length) {
-        selectedTableBody.innerHTML = `<tr><td colspan="8" class="empty-cell">Chưa có thí sinh nào được chọn.</td></tr>`;
+function renderRegisteredTable() {
+    const examId = Number(examSelect.value);
+    const sessionId = Number(sessionSelect.value);
+    if (!examId || !sessionId) {
+        registeredTableBody.innerHTML = `<tr><td colspan="7" class="empty-cell">Chưa có thí sinh nào được đăng ký vào ca thi này.</td></tr>`;
         return;
     }
 
-    const summaryHtml = selected.map((candidate) => `
+    const registered = candidates.filter((candidate) => Number(candidate.caThiId) === sessionId && candidate.caThiId != null);
+    if (!registered.length) {
+        registeredTableBody.innerHTML = `<tr><td colspan="7" class="empty-cell">Ca thi đang chọn chưa có thí sinh nào được xếp lịch.</td></tr>`;
+        return;
+    }
+
+    registeredTableBody.innerHTML = registered.map((candidate) => `
         <tr>
             <td>${candidate.maThiSinh || "—"}</td>
             <td>${candidate.hoTen || "—"}</td>
-            <td>${candidate.ngaySinh ? formatDateTime(candidate.ngaySinh) : "—"}</td>
             <td>${candidate.lop || "—"}</td>
             <td>${candidate.khoa || "—"}</td>
             <td>${candidate.nganhHoc || "—"}</td>
             <td>${formatMoney(candidate.soTien)}</td>
             <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
-            <td>
-                <button class="btn btn-small btn-del" data-remove-id="${candidate.thiSinhId}" type="button">Bỏ xếp</button>
-            </td>
         </tr>
     `).join("");
-
-    selectedTableBody.innerHTML = summaryHtml;
-    selectedTableBody.querySelectorAll("[data-remove-id]").forEach((button) => {
-        button.addEventListener("click", async () => {
-            const thiSinhId = Number(button.dataset.removeId);
-            if (!thiSinhId) return;
-            await removeScheduleForCandidate(thiSinhId);
-        });
-    });
 }
 
 function renderTable() {
     const searchText = candidateSearch.value.trim().toLowerCase();
     const selectedStatus = statusFilter.value;
 
-    let filtered = candidates.filter((candidate) => {
+    let filtered = candidates.filter((candidate) => candidate.caThiId == null);
+
+    filtered = filtered.filter((candidate) => {
         const haystack = [candidate.maThiSinh, candidate.hoTen, candidate.lop, candidate.khoa, candidate.nganhHoc].join(" ").toLowerCase();
         const matchesText = !searchText || haystack.includes(searchText);
         let matchesStatus = true;
         if (selectedStatus === "eligible") matchesStatus = candidate.canSchedule;
-        if (selectedStatus === "already-scheduled") matchesStatus = candidate.caThiId != null;
+        if (selectedStatus === "already-scheduled") matchesStatus = false;
         if (selectedStatus === "unpaid") matchesStatus = candidate.soTien == null || Number(candidate.soTien) < 800;
         return matchesText && matchesStatus;
     });
 
     if (!filtered.length) {
-        tableBody.innerHTML = `<tr><td colspan="10" class="empty-cell">Không có thí sinh phù hợp.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="10" class="empty-cell">Chưa có thí sinh nào được xếp lịch trong ca thi này.</td></tr>`;
         selectAllRows.checked = false;
         return;
     }
 
-    const groups = new Map();
-    filtered.forEach((candidate) => {
-        const key = candidate.caThiId ? `ca-${candidate.caThiId}` : "no-session";
-        if (!groups.has(key)) {
-            groups.set(key, {
-                label: candidate.caThiId ? `${candidate.maPhong || "Phòng thi"} (${formatDateTime(candidate.thoiGianBatDau)} - ${formatDateTime(candidate.thoiGianKetThuc)})` : "Chưa có ca thi",
-                items: []
-            });
-        }
-        groups.get(key).items.push(candidate);
-    });
-
-    const html = [...groups.entries()].map(([key, group]) => `
-        <tr class="group-header-row">
-            <td colspan="10" class="group-header-cell">${group.label}</td>
-        </tr>
-        ${group.items.map((candidate) => {
-            const checked = selectedIds.has(candidate.thiSinhId) ? "checked" : "";
-            const disabled = !candidate.canSchedule && candidate.caThiId == null ? "disabled" : "";
-            return `
-                <tr>
-                    <td class="checkbox-col"><input type="checkbox" class="candidate-row-select" data-id="${candidate.thiSinhId}" ${checked} ${disabled}></td>
-                    <td>${candidate.maThiSinh || "—"}</td>
-                    <td>${candidate.hoTen || "—"}</td>
-                    <td>${candidate.lop || "—"}</td>
-                    <td>${candidate.khoa || "—"}</td>
-                    <td>${candidate.nganhHoc || "—"}</td>
-                    <td>${formatMoney(candidate.soTien)}</td>
-                    <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
-                    <td>${candidate.caThiId ? `${candidate.maPhong || "—"} (${formatDateTime(candidate.thoiGianBatDau)} - ${formatDateTime(candidate.thoiGianKetThuc)})` : "Chưa có ca"}</td>
-                    <td>
-                        <div class="actions-cell compact-row">
-                            <button class="btn btn-small btn-primary" type="button" data-assign-id="${candidate.thiSinhId}" ${disabled}>Xếp</button>
-                            <button class="btn btn-small btn-del" type="button" data-remove-id="${candidate.thiSinhId}" ${candidate.caThiId == null ? "disabled" : ""}>Bỏ xếp</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join("")}
-    `).join("");
+    const html = filtered.map((candidate) => {
+        const checked = selectedIds.has(candidate.thiSinhId) ? "checked" : "";
+        const disabled = !candidate.canSchedule ? "disabled" : "";
+        return `
+            <tr>
+                <td class="checkbox-col"><input type="checkbox" class="candidate-row-select" data-id="${candidate.thiSinhId}" ${checked} ${disabled}></td>
+                <td>${candidate.maThiSinh || "—"}</td>
+                <td>${candidate.hoTen || "—"}</td>
+                <td>${candidate.lop || "—"}</td>
+                <td>${candidate.khoa || "—"}</td>
+                <td>${candidate.nganhHoc || "—"}</td>
+                <td>${formatMoney(candidate.soTien)}</td>
+                <td><span class="${badgeClassForStatus(candidate)}">${statusText(candidate)}</span></td>
+                <td>Chưa có ca</td>
+                <td>
+                    <div class="actions-cell compact-row">
+                        <button class="btn btn-small btn-primary" type="button" data-assign-id="${candidate.thiSinhId}" ${disabled}>Xếp</button>
+                        <button class="btn btn-small btn-del" type="button" data-remove-id="${candidate.thiSinhId}" disabled>Bỏ xếp</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
 
     tableBody.innerHTML = html;
 
@@ -256,16 +251,25 @@ async function loadSessionsForExam(examId) {
     try {
         const payload = await apiFetch(`/exam-sessions?kyThiId=${examId}`);
         sessions = extractItems(payload);
-        sessionSelect.innerHTML = '<option value="">Chọn ca thi</option>' + sessions.map((session) => `<option value="${session.caThiId}">${session.maPhong || "Phòng thi"} • ${formatDateTime(session.thoiGianBatDau)} - ${formatDateTime(session.thoiGianKetThuc)}</option>`).join("");
 
-        if (sessionSelect.value) {
-            renderSessionSummary();
-        } else if (sessions.length) {
-            const first = sessions[0];
-            sessionSelect.value = String(first.caThiId);
-            renderSessionSummary();
+        const currentSelectedValue = sessionSelect.value;
+        const currentSessionId = Number(currentSelectedValue || 0);
+        const preferredSessionId = currentSessionId && sessions.some((item) => Number(item.caThiId) === currentSessionId)
+            ? currentSessionId
+            : (sessions.length ? Number(sessions[0].caThiId) : 0);
+
+        if (preferredSessionId) {
+            const preferredSession = sessions.find((item) => Number(item.caThiId) === preferredSessionId) || sessions[0];
+            const otherSessions = sessions.filter((item) => Number(item.caThiId) !== Number(preferredSession.caThiId));
+            sessions = [preferredSession, ...otherSessions];
         }
 
+        sessionSelect.innerHTML = '<option value="">Chọn ca thi</option>' + sessions.map((session) => `<option value="${session.caThiId}">${session.maPhong || "Phòng thi"} • ${formatDateTime(session.thoiGianBatDau)} - ${formatDateTime(session.thoiGianKetThuc)}</option>`).join("");
+        if (preferredSessionId) {
+            sessionSelect.value = String(preferredSessionId);
+        }
+
+        renderSessionSummary();
         await loadCandidates();
     } catch (error) {
         sessionSelect.innerHTML = '<option value="">Không thể tải ca thi</option>';
@@ -297,6 +301,7 @@ async function loadCandidates() {
         [...selectedIds].forEach((id) => {
             if (!legalIds.has(id)) selectedIds.delete(id);
         });
+        renderRegisteredTable();
     } catch (error) {
         candidates = [];
         toast(error.message || "Không thể tải danh sách thí sinh cho kỳ thi này.", "error");
@@ -397,9 +402,22 @@ examSelect.addEventListener("change", async () => {
     }
 });
 
-sessionSelect.addEventListener("change", () => {
+sessionSelect.addEventListener("change", async () => {
     renderSessionSummary();
     renderSelectedSummary();
+    renderRegisteredTable();
+    await loadCandidates();
+    const sessionId = Number(sessionSelect.value || 0);
+    if (sessionId) {
+        const current = sessions.find((item) => Number(item.caThiId) === sessionId);
+        if (current) {
+            sessions = [current, ...sessions.filter((item) => Number(item.caThiId) !== sessionId)];
+            sessionSelect.innerHTML = '<option value="">Chọn ca thi</option>' + sessions.map((session) => `<option value="${session.caThiId}">${session.maPhong || "Phòng thi"} • ${formatDateTime(session.thoiGianBatDau)} - ${formatDateTime(session.thoiGianKetThuc)}</option>`).join("");
+            sessionSelect.value = String(sessionId);
+        }
+    }
+    renderSessionSummary();
+    renderRegisteredTable();
 });
 
 selectAllRows.addEventListener("change", () => {

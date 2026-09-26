@@ -13,4 +13,5 @@ public record CaThiResponseDto(
     int CaThiId, int KyThiId, string MaKyThi, string TenKyThi,
     int PhongThiId, string MaPhong, string TenPhong,
     DateTime ThoiGianBatDau, DateTime ThoiGianKetThuc,
-    int SucChua, string TrangThai, string? GhiChu);
+    int SucChua, int DaXep, int ConLai, int ChuaXep,
+    string TrangThai, string? GhiChu);

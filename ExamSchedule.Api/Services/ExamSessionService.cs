@@ -47,8 +47,30 @@ public class ExamSessionService
             q = q.Where(c => c.TrangThai == tt);
         }
 
-        return await q.OrderBy(c => c.ThoiGianBatDau)
-            .Select(c => ToDto(c)).ToListAsync();
+        var sessions = await q.OrderBy(c => c.ThoiGianBatDau).ToListAsync();
+        var sessionStats = await _db.DangKyThis
+            .AsNoTracking()
+            .Where(x => x.KyThiId == kyThiId && x.CaThiId.HasValue)
+            .GroupBy(x => x.CaThiId!.Value)
+            .Select(g => new
+            {
+                CaThiId = g.Key,
+                DaXep = g.Count(x => x.TrangThai == TrangThaiDangKyThi.DaXep),
+                ChoXep = g.Count(x => x.TrangThai == TrangThaiDangKyThi.ChoXep),
+                ChuaXep = g.Count(x => x.TrangThai == TrangThaiDangKyThi.ChuaXep)
+            })
+            .ToListAsync();
+
+        var statsMap = sessionStats.ToDictionary(x => x.CaThiId, x => x);
+
+        return sessions.Select(c =>
+        {
+            var stats = statsMap.TryGetValue(c.CaThiId, out var item)
+                ? item
+                : new { CaThiId = c.CaThiId, DaXep = 0, ChoXep = 0, ChuaXep = 0 };
+            var chuaXep = stats.ChoXep + stats.ChuaXep;
+            return ToDto(c, stats.DaXep, chuaXep);
+        }).ToList();
     }
 
     public async Task<CaThiResponseDto> CreateAsync(CaThiCreateDto dto, int userId, string ip)
@@ -91,7 +113,7 @@ public class ExamSessionService
         await _audit.LogAsync(userId, "CREATE", "CA_THI", ca.CaThiId, null, ca, ip);
         await _statusUpdater.UpdateAllAsync();
 
-        return ToDto(ca);
+        return ToDto(ca, 0, 0);
     }
 
     public async Task UpdateAsync(int id, CaThiUpdateDto dto, int userId, string ip)
@@ -211,9 +233,11 @@ public class ExamSessionService
             throw new BusinessException("Sức chứa phải lớn hơn 0.");
     }
 
-    private static CaThiResponseDto ToDto(CaThi c) =>
-        new(c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
+    private static CaThiResponseDto ToDto(CaThi c, int daXep, int chuaXep) {
+        var conLai = Math.Max(0, c.SucChua - daXep);
+        return new(c.CaThiId, c.KyThiId, c.KyThi?.MaKyThi ?? "", c.KyThi?.TenKyThi ?? "",
             c.PhongThiId, c.PhongThi?.MaPhong ?? "", c.PhongThi?.TenPhong ?? "",
-            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua,
+            c.ThoiGianBatDau, c.ThoiGianKetThuc, c.SucChua, daXep, conLai, chuaXep,
             c.TrangThai.ToString(), c.GhiChu);
+    }
 }
